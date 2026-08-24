@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Import;
 
 use App\Http\Controllers\Controller;
 use App\Exports\OrdersExport;
+use App\Exports\OrdersFullExport;
+use App\Exports\OrdersTemplateExport;
 use App\Exports\ProductsExport;
 use App\Exports\UsersExport;
 use App\Imports\ProductsImport;
@@ -149,19 +151,30 @@ class ImportExportController extends Controller
     }
 
     /**
-     * Export orders to CSV
+     * Export orders (with items and payments/abonos) to a multi-sheet Excel file.
      */
     public function exportOrders(Request $request)
     {
         $organizationId = $request->user()->organization_id;
 
-        $filters = $request->only(['status', 'date_from', 'date_to', 'customer_id']);
+        $filters = $request->only(['status', 'date_from', 'date_to']);
 
         $filename = 'orders_' . now()->format('Y-m-d_His') . '.xlsx';
 
         return Excel::download(
-            new OrdersExport($organizationId, $filters),
+            new OrdersFullExport($organizationId, $filters),
             $filename
+        );
+    }
+
+    /**
+     * Download the orders import template (Orders / Items / Payments sheets).
+     */
+    public function downloadOrdersTemplate()
+    {
+        return Excel::download(
+            new OrdersTemplateExport(),
+            'orders_import_template.xlsx'
         );
     }
 

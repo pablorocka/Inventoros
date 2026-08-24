@@ -38,8 +38,8 @@ const submit = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                     Add Supplier
                 </h2>
                 <Link
@@ -51,12 +51,12 @@ const submit = () => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Plugin Slot: Header -->
                 <PluginSlot slot="header" :components="pluginComponents?.header" />
 
-                <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <form @submit.prevent="submit" class="p-6 space-y-6">
                         <!-- Basic Information -->
                         <div>

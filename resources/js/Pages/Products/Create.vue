@@ -157,8 +157,8 @@ const submit = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                     Add Product
                 </h2>
                 <Link
@@ -173,12 +173,12 @@ const submit = () => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Plugin Slot: Header -->
                 <PluginSlot slot="header" :components="pluginComponents?.header" />
 
-                <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <div class="p-6">
                         <!-- Plugin Slot: Before Form -->
                         <PluginSlot slot="before-form" :components="pluginComponents?.beforeForm" />
@@ -371,7 +371,7 @@ const submit = () => {
                                             Additional Currencies
                                         </label>
 
-                                        <div v-for="(currencyPrice, index) in additionalCurrencies" :key="index" class="grid grid-cols-3 gap-2">
+                                        <div v-for="(currencyPrice, index) in additionalCurrencies" :key="index" class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                             <select
                                                 v-model="currencyPrice.currency"
                                                 class="col-span-1 rounded-md bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 placeholder-gray-500 shadow-sm focus:border-primary-400 focus:ring-primary-400"

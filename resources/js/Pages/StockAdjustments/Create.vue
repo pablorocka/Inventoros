@@ -52,9 +52,9 @@ const submit = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex justify-between items-center">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="font-semibold text-2xl text-gray-900 dark:text-gray-100">Create Stock Adjustment</h2>
+                    <h2 class="font-semibold text-xl sm:text-2xl text-gray-900 dark:text-gray-100">Create Stock Adjustment</h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manually adjust product stock levels</p>
                 </div>
                 <Link
@@ -66,8 +66,8 @@ const submit = () => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-3xl mx-auto px-3 sm:px-6 lg:px-8">
                 <form @submit.prevent="submit" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border shadow-sm sm:rounded-lg p-6">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-6">Adjustment Details</h3>
 

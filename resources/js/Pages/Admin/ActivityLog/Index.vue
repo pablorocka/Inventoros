@@ -116,13 +116,13 @@ const getChangedFields = (properties) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+            <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                 Activity Log
             </h2>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Filters -->
                 <div class="mb-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-sm p-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -278,7 +278,7 @@ const getChangedFields = (properties) => {
                                                         </svg>
                                                         View {{ getChangedFields(activity.properties).length }} Change{{ getChangedFields(activity.properties).length > 1 ? 's' : '' }}
                                                     </summary>
-                                                    <div class="mt-2 p-3 bg-gray-50 dark:bg-dark-bg rounded-lg border border-gray-200 dark:border-dark-border overflow-x-auto">
+                                                    <div class="mt-2 p-3 bg-gray-50 dark:bg-dark-bg rounded-lg border border-gray-200 dark:border-dark-border overflow-x-auto responsive-table">
                                                         <table class="w-full text-xs">
                                                             <thead>
                                                                 <tr class="border-b border-gray-200 dark:border-dark-border">

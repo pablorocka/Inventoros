@@ -49,6 +49,7 @@ class RoleSeeder extends Seeder
                     Permission::EDIT_ORDERS->value,
                     Permission::DELETE_ORDERS->value,
                     Permission::APPROVE_ORDERS->value,
+                    Permission::MANAGE_ORDER_PAYMENTS->value,
 
                     Permission::VIEW_REPORTS->value,
                     Permission::EXPORT_DATA->value,

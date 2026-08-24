@@ -10,6 +10,7 @@ const { hasPermission } = usePermissions();
 const props = defineProps({
     order: Object,
     canApprove: Boolean,
+    canManagePayments: Boolean,
     pluginComponents: Object,
 });
 
@@ -72,6 +73,80 @@ const deleteOrder = () => {
     });
 };
 
+// Payments functionality
+const showPaymentModal = ref(false);
+const paymentToDelete = ref(null);
+const deletingPayment = ref(false);
+
+const paymentForm = useForm({
+    amount: '',
+    method: 'cash',
+    reference: '',
+    paid_at: new Date().toISOString().slice(0, 10),
+    notes: '',
+});
+
+const balanceDue = () => {
+    return Math.max(0, parseFloat(props.order.total) - parseFloat(props.order.amount_paid || 0));
+};
+
+const openPaymentModal = () => {
+    paymentForm.reset();
+    paymentForm.amount = balanceDue().toFixed(2);
+    paymentForm.paid_at = new Date().toISOString().slice(0, 10);
+    showPaymentModal.value = true;
+};
+
+const submitPayment = () => {
+    paymentForm.post(route('orders.payments.store', props.order.id), {
+        preserveScroll: true,
+        onSuccess: () => {
+            showPaymentModal.value = false;
+        },
+    });
+};
+
+const deletePayment = () => {
+    if (!paymentToDelete.value) return;
+    deletingPayment.value = true;
+    router.delete(route('orders.payments.destroy', [props.order.id, paymentToDelete.value.id]), {
+        preserveScroll: true,
+        onFinish: () => {
+            deletingPayment.value = false;
+            paymentToDelete.value = null;
+        },
+    });
+};
+
+const getPaymentStatusClass = (status) => {
+    const classes = {
+        pending: 'bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border border-blue-300 dark:border-blue-800',
+        partial: 'bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800',
+        paid: 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 border border-green-300 dark:border-green-800',
+    };
+    return classes[status] || 'bg-gray-900/30 text-gray-400 border border-gray-800';
+};
+
+const paymentStatusLabel = (status) => {
+    const labels = {
+        pending: 'Pending',
+        partial: 'Partially Paid',
+        paid: 'Paid',
+    };
+    return labels[status] || status;
+};
+
+const paymentMethodLabel = (method) => {
+    const labels = {
+        cash: 'Cash',
+        transfer: 'Transfer',
+        card: 'Card',
+        yappy: 'Yappy',
+        other: 'Other',
+    };
+    return labels[method] || method;
+};
+
 const formatDate = (date) => {
     if (!date) return '-';
     return new Date(date).toLocaleDateString('en-US', {
@@ -98,10 +173,10 @@ const formatDateShort = (date) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <div class="flex items-center gap-3">
-                        <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+                    <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+                        <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                             Order #{{ order.order_number }}
                         </h2>
                         <span :class="getStatusClass(order.status)" class="px-3 py-1 rounded-full text-xs font-semibold uppercase">
@@ -110,12 +185,15 @@ const formatDateShort = (date) => {
                         <span v-if="order.approval_status" :class="getApprovalStatusClass(order.approval_status)" class="px-3 py-1 rounded-full text-xs font-semibold uppercase">
                             {{ order.approval_status }}
                         </span>
+                        <span :class="getPaymentStatusClass(order.payment_status)" class="px-3 py-1 rounded-full text-xs font-semibold uppercase">
+                            {{ paymentStatusLabel(order.payment_status) }}
+                        </span>
                     </div>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                         Created on {{ formatDateShort(order.order_date) }}
                     </p>
                 </div>
-                <div class="flex gap-2">
+                <div class="flex flex-wrap gap-2">
                     <Link
                         v-if="hasPermission('edit_orders')"
                         :href="route('orders.edit', order.id)"
@@ -139,8 +217,8 @@ const formatDateShort = (date) => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Plugin Slot: Header -->
                 <PluginSlot slot="header" :components="pluginComponents?.header" />
 
@@ -157,10 +235,10 @@ const formatDateShort = (date) => {
                                 <div
                                     v-for="(item, index) in order.items"
                                     :key="index"
-                                    class="flex items-center gap-4 p-4 bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg"
+                                    class="flex flex-col gap-3 p-4 bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg sm:flex-row sm:items-center sm:gap-4"
                                 >
-                                    <div class="flex-1">
-                                        <p class="font-medium text-gray-900 dark:text-gray-100">{{ item.product_name }}</p>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="font-medium text-gray-900 dark:text-gray-100 break-words">{{ item.product_name }}</p>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">SKU: {{ item.sku }}</p>
                                         <Link
                                             v-if="item.product"
@@ -171,21 +249,23 @@ const formatDateShort = (date) => {
                                         </Link>
                                     </div>
 
-                                    <div class="text-right">
+                                    <div class="grid grid-cols-3 gap-2 sm:contents">
+                                    <div class="text-left sm:text-right">
                                         <p class="text-sm text-gray-500 dark:text-gray-400">Quantity</p>
                                         <p class="font-medium text-gray-900 dark:text-gray-100">{{ item.quantity }}</p>
                                     </div>
 
-                                    <div class="text-right">
+                                    <div class="text-left sm:text-right">
                                         <p class="text-sm text-gray-500 dark:text-gray-400">Unit Price</p>
                                         <p class="font-medium text-gray-900 dark:text-gray-100">${{ parseFloat(item.unit_price).toFixed(2) }}</p>
                                     </div>
 
-                                    <div class="text-right min-w-[100px]">
+                                    <div class="text-left sm:text-right sm:min-w-[100px]">
                                         <p class="text-sm text-gray-500 dark:text-gray-400">Total</p>
                                         <p class="font-semibold text-gray-900 dark:text-gray-100">
                                             ${{ parseFloat(item.total || item.subtotal || (item.quantity * item.unit_price)).toFixed(2) }}
                                         </p>
+                                    </div>
                                     </div>
                                 </div>
                             </div>
@@ -256,6 +336,59 @@ const formatDateShort = (date) => {
                             </div>
                         </div>
 
+                        <!-- Payments -->
+                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border shadow-sm sm:rounded-lg p-6">
+                            <div class="flex items-center justify-between mb-4">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                                    Payment History
+                                </h3>
+                                <button
+                                    v-if="canManagePayments && order.payment_status !== 'paid' && order.status !== 'cancelled'"
+                                    @click="openPaymentModal"
+                                    class="inline-flex items-center px-3 py-1.5 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-md transition-colors"
+                                >
+                                    + Register Payment
+                                </button>
+                            </div>
+
+                            <div v-if="!order.payments || order.payments.length === 0" class="text-sm text-gray-500 dark:text-gray-400">
+                                No payments registered yet.
+                            </div>
+
+                            <div v-else class="overflow-x-auto responsive-table">
+                                <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
+                                    <thead>
+                                        <tr>
+                                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Date</th>
+                                            <th class="px-3 py-2 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Amount</th>
+                                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Method</th>
+                                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Reference</th>
+                                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Registered By</th>
+                                            <th v-if="canManagePayments" class="px-3 py-2"></th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-gray-200 dark:divide-dark-border">
+                                        <tr v-for="payment in order.payments" :key="payment.id">
+                                            <td class="px-3 py-2 text-sm text-gray-900 dark:text-gray-100 whitespace-nowrap">{{ formatDateShort(payment.paid_at) }}</td>
+                                            <td class="px-3 py-2 text-sm font-medium text-green-600 dark:text-green-400 text-right whitespace-nowrap">${{ parseFloat(payment.amount).toFixed(2) }}</td>
+                                            <td class="px-3 py-2 text-sm text-gray-600 dark:text-gray-300">{{ paymentMethodLabel(payment.method) }}</td>
+                                            <td class="px-3 py-2 text-sm text-gray-600 dark:text-gray-300">{{ payment.reference || '-' }}</td>
+                                            <td class="px-3 py-2 text-sm text-gray-600 dark:text-gray-300">{{ payment.creator?.name || '-' }}</td>
+                                            <td v-if="canManagePayments" class="px-3 py-2 text-right">
+                                                <button
+                                                    @click="paymentToDelete = payment"
+                                                    class="text-red-500 hover:text-red-400 text-sm"
+                                                    title="Delete payment"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
                         <!-- Notes -->
                         <div v-if="order.notes" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border shadow-sm sm:rounded-lg p-6">
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -282,6 +415,13 @@ const formatDateShort = (date) => {
                                     <dd class="font-medium text-gray-900 dark:text-gray-100">${{ parseFloat(order.subtotal).toFixed(2) }}</dd>
                                 </div>
 
+                                <div v-if="parseFloat(order.discount_amount || 0) > 0" class="flex justify-between text-sm">
+                                    <dt class="text-gray-600 dark:text-gray-300">
+                                        Discount<span v-if="order.discount_type === 'percent'"> ({{ parseFloat(order.discount_value).toFixed(0) }}%)</span>
+                                    </dt>
+                                    <dd class="font-medium text-red-500 dark:text-red-400">-${{ parseFloat(order.discount_amount).toFixed(2) }}</dd>
+                                </div>
+
                                 <div class="flex justify-between text-sm">
                                     <dt class="text-gray-600 dark:text-gray-300">Tax</dt>
                                     <dd class="font-medium text-gray-900 dark:text-gray-100">${{ parseFloat(order.tax || 0).toFixed(2) }}</dd>
@@ -297,6 +437,25 @@ const formatDateShort = (date) => {
                                         <dt class="text-lg font-semibold text-gray-900 dark:text-gray-100">Total</dt>
                                         <dd class="text-xl font-bold text-primary-400">${{ parseFloat(order.total).toFixed(2) }}</dd>
                                     </div>
+                                </div>
+
+                                <div class="flex justify-between text-sm">
+                                    <dt class="text-gray-600 dark:text-gray-300">Amount Paid</dt>
+                                    <dd class="font-medium text-green-600 dark:text-green-400">${{ parseFloat(order.amount_paid || 0).toFixed(2) }}</dd>
+                                </div>
+
+                                <div class="flex justify-between items-center text-sm">
+                                    <dt class="text-gray-600 dark:text-gray-300">Balance Due</dt>
+                                    <dd class="font-semibold" :class="balanceDue() > 0 ? 'text-yellow-600 dark:text-yellow-400' : 'text-green-600 dark:text-green-400'">${{ balanceDue().toFixed(2) }}</dd>
+                                </div>
+
+                                <div class="flex justify-between items-center text-sm">
+                                    <dt class="text-gray-600 dark:text-gray-300">Payment Status</dt>
+                                    <dd>
+                                        <span :class="getPaymentStatusClass(order.payment_status)" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium">
+                                            {{ paymentStatusLabel(order.payment_status) }}
+                                        </span>
+                                    </dd>
                                 </div>
                             </dl>
                         </div>
@@ -418,6 +577,148 @@ const formatDateShort = (date) => {
 
                 <!-- Plugin Slot: Footer -->
                 <PluginSlot slot="footer" :components="pluginComponents?.footer" />
+            </div>
+        </div>
+
+        <!-- Register Payment Modal -->
+        <div v-if="showPaymentModal" class="fixed inset-0 z-50 overflow-y-auto" @click="showPaymentModal = false">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+                <div class="relative bg-white dark:bg-dark-card rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                            Register Payment
+                        </h3>
+                        <button
+                            @click="showPaymentModal = false"
+                            class="text-gray-500 dark:text-gray-400 hover:text-gray-200"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
+
+                    <div class="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                        Outstanding balance: <strong class="text-yellow-600 dark:text-yellow-400">${{ balanceDue().toFixed(2) }}</strong>
+                    </div>
+
+                    <form @submit.prevent="submitPayment" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Amount *</label>
+                            <input
+                                v-model="paymentForm.amount"
+                                type="number"
+                                step="0.01"
+                                min="0.01"
+                                :max="balanceDue().toFixed(2)"
+                                required
+                                class="w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-bg dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500"
+                            />
+                            <p v-if="paymentForm.errors.amount" class="mt-1 text-sm text-red-500">{{ paymentForm.errors.amount }}</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Method *</label>
+                            <select
+                                v-model="paymentForm.method"
+                                required
+                                class="w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-bg dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500"
+                            >
+                                <option value="cash">Cash</option>
+                                <option value="transfer">Transfer</option>
+                                <option value="card">Card</option>
+                                <option value="yappy">Yappy</option>
+                                <option value="other">Other</option>
+                            </select>
+                            <p v-if="paymentForm.errors.method" class="mt-1 text-sm text-red-500">{{ paymentForm.errors.method }}</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Reference</label>
+                            <input
+                                v-model="paymentForm.reference"
+                                type="text"
+                                maxlength="255"
+                                placeholder="Transfer #, receipt, etc."
+                                class="w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-bg dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500"
+                            />
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Payment Date *</label>
+                            <input
+                                v-model="paymentForm.paid_at"
+                                type="date"
+                                required
+                                class="w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-bg dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500"
+                            />
+                            <p v-if="paymentForm.errors.paid_at" class="mt-1 text-sm text-red-500">{{ paymentForm.errors.paid_at }}</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes</label>
+                            <textarea
+                                v-model="paymentForm.notes"
+                                rows="2"
+                                class="w-full rounded-md border-gray-300 dark:border-dark-border dark:bg-dark-bg dark:text-gray-100 focus:border-primary-500 focus:ring-primary-500"
+                            ></textarea>
+                        </div>
+
+                        <div class="flex gap-3 justify-end pt-2">
+                            <button
+                                type="button"
+                                @click="showPaymentModal = false"
+                                class="px-4 py-2 bg-gray-100 dark:bg-dark-bg text-gray-600 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-dark-bg/50"
+                                :disabled="paymentForm.processing"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                type="submit"
+                                :disabled="paymentForm.processing"
+                                class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-md disabled:opacity-50"
+                            >
+                                {{ paymentForm.processing ? 'Saving...' : 'Register Payment' }}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Delete Payment Confirmation Modal -->
+        <div v-if="paymentToDelete" class="fixed inset-0 z-50 overflow-y-auto" @click="paymentToDelete = null">
+            <div class="flex items-center justify-center min-h-screen px-4">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+
+                <div class="relative bg-white dark:bg-dark-card rounded-lg shadow-xl max-w-md w-full p-6" @click.stop>
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                        Delete Payment
+                    </h3>
+                    <p class="text-gray-600 dark:text-gray-300 mb-6">
+                        Delete the payment of <strong>${{ parseFloat(paymentToDelete.amount).toFixed(2) }}</strong> from {{ formatDateShort(paymentToDelete.paid_at) }}? The order balance will be recalculated.
+                    </p>
+                    <div class="flex gap-3 justify-end">
+                        <button
+                            type="button"
+                            @click="paymentToDelete = null"
+                            class="px-4 py-2 bg-gray-100 dark:bg-dark-bg text-gray-600 dark:text-gray-300 rounded-md hover:bg-gray-200 dark:hover:bg-dark-bg/50"
+                            :disabled="deletingPayment"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            @click="deletePayment"
+                            :disabled="deletingPayment"
+                            class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md disabled:opacity-50"
+                        >
+                            {{ deletingPayment ? 'Deleting...' : 'Delete' }}
+                        </button>
+                    </div>
+                </div>
             </div>
         </div>
 

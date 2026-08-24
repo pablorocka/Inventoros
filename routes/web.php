@@ -14,6 +14,7 @@ use App\Http\Controllers\Inventory\ProductLocationController;
 use App\Http\Controllers\Inventory\StockAdjustmentController;
 use App\Http\Controllers\Inventory\SupplierController;
 use App\Http\Controllers\Order\OrderController;
+use App\Http\Controllers\Order\OrderPaymentController;
 use App\Http\Controllers\Purchasing\PurchaseOrderController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
@@ -137,6 +138,8 @@ Route::middleware('auth')->group(function () {
     Route::patch('/orders/{order}', [OrderController::class, 'update'])->middleware('permission:edit_orders');
     Route::get('/orders/{order}', [OrderController::class, 'show'])->name('orders.show')->middleware('permission:view_orders');
     Route::delete('/orders/{order}', [OrderController::class, 'destroy'])->name('orders.destroy')->middleware('permission:delete_orders');
+    Route::post('/orders/{order}/payments', [OrderPaymentController::class, 'store'])->name('orders.payments.store')->middleware('permission:manage_order_payments');
+    Route::delete('/orders/{order}/payments/{payment}', [OrderPaymentController::class, 'destroy'])->name('orders.payments.destroy')->middleware('permission:manage_order_payments');
     Route::post('/orders/{order}/approve', [OrderController::class, 'approve'])->name('orders.approve')->middleware('permission:approve_orders');
     Route::post('/orders/{order}/reject', [OrderController::class, 'reject'])->name('orders.reject')->middleware('permission:approve_orders');
 
@@ -225,6 +228,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/sales-analysis', [\App\Http\Controllers\Reports\ReportController::class, 'salesAnalysis'])->name('sales-analysis');
         Route::get('/low-stock', [\App\Http\Controllers\Reports\ReportController::class, 'lowStock'])->name('low-stock');
         Route::get('/category-performance', [\App\Http\Controllers\Reports\ReportController::class, 'categoryPerformance'])->name('category-performance');
+        Route::get('/unpaid-orders', [\App\Http\Controllers\Reports\ReportController::class, 'unpaidOrders'])->name('unpaid-orders');
+        Route::get('/unpaid-orders/export', [\App\Http\Controllers\Reports\ReportController::class, 'exportUnpaidOrders'])->name('unpaid-orders.export');
+        Route::get('/payments', [\App\Http\Controllers\Reports\ReportController::class, 'payments'])->name('payments');
+        Route::get('/payments/export', [\App\Http\Controllers\Reports\ReportController::class, 'exportPayments'])->name('payments.export');
     });
 
     // Notifications
@@ -244,6 +251,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/export-orders', [ImportExportController::class, 'exportOrders'])->middleware('permission:export_data')->name('export-orders');
         Route::get('/export-users', [ImportExportController::class, 'exportUsers'])->middleware('permission:export_data')->name('export-users');
         Route::get('/download-template', [ImportExportController::class, 'downloadTemplate'])->middleware('permission:import_data')->name('download-template');
+        Route::get('/download-orders-template', [ImportExportController::class, 'downloadOrdersTemplate'])->middleware('permission:import_data')->name('download-orders-template');
         Route::post('/import-products', [ImportExportController::class, 'importProducts'])->middleware('permission:import_data')->name('import-products');
     });
 });

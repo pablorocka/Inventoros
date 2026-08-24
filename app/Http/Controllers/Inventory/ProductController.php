@@ -42,7 +42,8 @@ class ProductController extends Controller
             ->when($request->input('low_stock'), function ($query) {
                 $query->lowStock();
             })
-            ->latest();
+            ->orderBy('stock', 'desc')
+            ->orderBy('name', 'asc');
 
         // Hook: Modify product list query
         $query = apply_filters('product_list_query', $query, $request);

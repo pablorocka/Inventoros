@@ -36,8 +36,8 @@ const deleteCustomer = (customer) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                     Customers
                 </h2>
                 <Link
@@ -52,10 +52,10 @@ const deleteCustomer = (customer) => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Search -->
-                <div class="mb-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div class="mb-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <div class="p-6">
                         <form @submit.prevent="searchCustomers" class="space-y-4">
                             <div class="flex gap-4">
@@ -96,8 +96,8 @@ const deleteCustomer = (customer) => {
                 </div>
 
                 <!-- Customers Table -->
-                <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
-                    <div class="overflow-x-auto">
+                <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
+                    <div class="overflow-x-auto responsive-table">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
                             <thead class="bg-gray-50 dark:bg-dark-bg">
                                 <tr>

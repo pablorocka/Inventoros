@@ -1,5 +1,6 @@
 import '../css/app.css';
 import './bootstrap';
+import { initResponsiveTables } from './responsiveTables';
 
 import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
@@ -46,3 +47,6 @@ createInertiaApp({
         color: '#4B5563',
     },
 });
+
+// Collapse wide tables into stacked cards on phones (see responsiveTables.js)
+initResponsiveTables();

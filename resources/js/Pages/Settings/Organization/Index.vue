@@ -54,13 +54,13 @@ const isAdmin = props.user.is_admin;
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+            <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                 Organization Settings
             </h2>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Tabs -->
                 <div class="mb-6 border-b border-gray-200 dark:border-dark-border">
                     <nav class="-mb-px flex space-x-8">
@@ -102,7 +102,7 @@ const isAdmin = props.user.is_admin;
                 </div>
 
                 <!-- General Information Tab -->
-                <div v-show="activeTab === 'general'" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div v-show="activeTab === 'general'" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <form @submit.prevent="submitGeneral" class="p-6 space-y-6">
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Organization Information</h3>
@@ -207,7 +207,7 @@ const isAdmin = props.user.is_admin;
                 </div>
 
                 <!-- Regional Settings Tab -->
-                <div v-show="activeTab === 'regional'" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div v-show="activeTab === 'regional'" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <form @submit.prevent="submitRegional" class="p-6 space-y-6">
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Regional Settings</h3>
@@ -272,7 +272,7 @@ const isAdmin = props.user.is_admin;
                 </div>
 
                 <!-- User Management Tab -->
-                <div v-show="activeTab === 'users' && isAdmin" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg p-6">
+                <div v-show="activeTab === 'users' && isAdmin" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg p-6">
                     <div class="text-center py-12">
                         <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />

@@ -8,6 +8,7 @@ use App\Observers\OrderObserver;
 use App\Observers\ProductObserver;
 use App\Services\PluginService;
 use App\Services\PluginUIService;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
 
@@ -39,6 +40,10 @@ class AppServiceProvider extends ServiceProvider
         if (file_exists(base_path('plugins'))) {
             $pluginService = app(PluginService::class);
             $pluginService->loadActivePlugins();
+        }
+
+        if (config('app.force_https')) {
+            URL::forceScheme('https');
         }
     }
 }

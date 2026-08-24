@@ -1,17 +1,21 @@
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import ApplicationLogo from '@/Components/ApplicationLogo.vue';
-import { Link } from '@inertiajs/vue3';
+import { Link, router, usePage } from '@inertiajs/vue3';
 import { usePermissions } from '@/composables/usePermissions';
 import NotificationDropdown from '@/Components/Layout/NotificationDropdown.vue';
 import ThemeToggle from '@/Components/Layout/ThemeToggle.vue';
 import SidebarNavItem from '@/Components/Layout/SidebarNavItem.vue';
 import SidebarUserProfile from '@/Components/Layout/SidebarUserProfile.vue';
+import MobileBottomNav from '@/Components/Layout/MobileBottomNav.vue';
 
 const sidebarOpen = ref(false);
 const settingsSubmenuOpen = ref(false);
 const notificationDropdownRef = ref(null);
 const { hasPermission } = usePermissions();
+const page = usePage();
+const appName = page.props.app?.name ?? 'Inventario';
+const appLogoUrl = page.props.app?.logoUrl ?? null;
 
 const toggleSettingsSubmenu = () => {
     settingsSubmenuOpen.value = !settingsSubmenuOpen.value;
@@ -25,6 +29,32 @@ onMounted(() => {
     // Auto-expand settings submenu if on a settings page
     if (route().current('settings.*') || route().current('account.*')) {
         settingsSubmenuOpen.value = true;
+    }
+});
+
+// Close the mobile sidebar whenever we navigate to another page.
+// Keep the unsubscribe handle: Inertia recreates this layout on every
+// navigation, and an unremoved listener would pile up for the whole session.
+const stopNavigateListener = router.on('navigate', () => {
+    sidebarOpen.value = false;
+});
+
+// Prevent the page behind the drawer from scrolling while it is open.
+// `immediate` matters: when Inertia mounts a fresh layout after navigating
+// away with the drawer open, the old instance is gone and nobody removed the
+// lock, so the new page would stay unscrollable until a full reload.
+watch(sidebarOpen, (open) => {
+    if (typeof document !== 'undefined') {
+        document.body.classList.toggle('overflow-hidden', open);
+        document.body.classList.toggle('lg:overflow-auto', open);
+    }
+}, { immediate: true });
+
+onUnmounted(() => {
+    stopNavigateListener();
+
+    if (typeof document !== 'undefined') {
+        document.body.classList.remove('overflow-hidden', 'lg:overflow-auto');
     }
 });
 
@@ -103,12 +133,24 @@ const navItems = {
                :class="{ '-translate-x-full': !sidebarOpen, 'translate-x-0': sidebarOpen }">
             <div class="flex flex-col h-full">
                 <!-- Logo -->
-                <div class="flex items-center justify-between h-20 px-6 border-b border-dark-border">
+                <div class="flex items-center justify-between h-16 lg:h-20 px-4 lg:px-6 border-b border-dark-border">
                     <Link :href="route('dashboard')" class="flex items-center gap-3">
-                        <ApplicationLogo class="h-9 w-auto fill-current text-primary-400" />
-                        <span class="text-xl font-bold text-gray-100">InventorOS</span>
+                        <ApplicationLogo :src="appLogoUrl" class="h-8 lg:h-9 w-auto fill-current text-primary-400" />
+                        <span class="text-lg lg:text-xl font-bold text-gray-100">{{ appName }}</span>
                     </Link>
-                    <ThemeToggle />
+                    <div class="flex items-center gap-1">
+                        <ThemeToggle />
+                        <!-- Close drawer (mobile only) -->
+                        <button
+                            @click="sidebarOpen = false"
+                            class="lg:hidden p-2 -mr-2 text-gray-400 hover:text-gray-200 rounded-lg"
+                            aria-label="Close menu"
+                        >
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
                 <!-- Navigation Links -->
@@ -346,11 +388,12 @@ const navItems = {
                 class="sticky top-0 z-40 bg-white dark:bg-dark-card border-b border-gray-200 dark:border-dark-border"
                 v-if="$slots.header"
             >
-                <div class="flex items-center justify-between px-4 py-6 sm:px-6 lg:px-8">
+                <div class="flex items-start sm:items-center justify-between gap-2 px-3 py-3 sm:px-6 sm:py-6 lg:px-8">
                     <!-- Mobile Menu Button -->
                     <button
                         @click="sidebarOpen = !sidebarOpen"
-                        class="lg:hidden p-2 text-gray-400 hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-dark-bg rounded-lg transition"
+                        class="lg:hidden -ml-1 p-2 flex-shrink-0 text-gray-400 hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-dark-bg rounded-lg transition"
+                        aria-label="Open menu"
                     >
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
@@ -358,23 +401,26 @@ const navItems = {
                     </button>
 
                     <!-- Header Content -->
-                    <div class="flex-1">
+                    <div class="flex-1 min-w-0">
                         <slot name="header" />
                     </div>
 
                     <!-- Header Actions -->
-                    <div class="flex items-center gap-2 ml-4">
-                        <ThemeToggle />
+                    <div class="flex items-center gap-1 sm:gap-2 sm:ml-4 flex-shrink-0">
+                        <span class="hidden sm:inline-flex"><ThemeToggle /></span>
                         <NotificationDropdown ref="notificationDropdownRef" />
                     </div>
                 </div>
             </header>
 
             <!-- Page Content -->
-            <main>
+            <main class="pb-20 lg:pb-0">
                 <slot />
             </main>
         </div>
+
+        <!-- Mobile bottom tab bar -->
+        <MobileBottomNav @open-menu="sidebarOpen = true" />
 
         <!-- Click outside to close notifications -->
         <div

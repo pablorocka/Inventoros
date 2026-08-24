@@ -1,3 +1,89 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ------------------------------------------------------------------
+   Responsive tables
+   Any <table> wrapped in an element with .responsive-table collapses
+   into stacked "label: value" cards on phones, so nothing needs to be
+   scrolled sideways. Labels are copied from <thead> at runtime by
+   resources/js/responsiveTables.js.
+   Desktop is untouched.
+   ------------------------------------------------------------------ */
+@media (max-width: 767px) {
+    .responsive-table {
+        overflow-x: visible !important;
+    }
+
+    .responsive-table table {
+        display: block;
+        width: 100%;
+        min-width: 0 !important;
+    }
+
+    .responsive-table thead {
+        display: none;
+    }
+
+    .responsive-table tbody {
+        display: block;
+    }
+
+    .responsive-table tbody tr {
+        display: block;
+        padding: 0.75rem 1rem;
+    }
+
+    .responsive-table tbody tr + tr {
+        border-top: 1px solid #e5e7eb;
+    }
+
+    .dark .responsive-table tbody tr + tr {
+        border-top-color: #1e2541;
+    }
+
+    .responsive-table tbody td {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 1rem;
+        width: auto !important;
+        max-width: none !important;
+        padding: 0.25rem 0 !important;
+        border: 0 !important;
+        text-align: right !important;
+        white-space: normal !important;
+    }
+
+    .responsive-table tbody td::before {
+        content: attr(data-label);
+        flex: 0 0 42%;
+        text-align: left;
+        font-size: 0.7rem;
+        font-weight: 600;
+        line-height: 1.4;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        color: #6b7280;
+    }
+
+    .dark .responsive-table tbody td::before {
+        color: #9ca3af;
+    }
+
+    /* Cells with no header (checkboxes, action columns) and full-width
+       cells (empty states, colspan rows) get no label and full width. */
+    .responsive-table tbody td:not([data-label]) {
+        display: block;
+        text-align: center !important;
+    }
+
+    .responsive-table tbody td:not([data-label])::before {
+        content: none;
+    }
+
+    /* Action buttons inside a stacked row stay comfortably tappable */
+    .responsive-table tbody td [class*="justify-end"] {
+        justify-content: flex-end;
+    }
+}

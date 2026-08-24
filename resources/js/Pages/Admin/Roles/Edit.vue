@@ -46,9 +46,9 @@ const isCategorySelected = (category) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="font-semibold text-2xl text-gray-900 dark:text-gray-100">Edit Role: {{ role.name }}</h2>
+                    <h2 class="font-semibold text-xl sm:text-2xl text-gray-900 dark:text-gray-100">Edit Role: {{ role.name }}</h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1" v-if="role.is_system">
                         System role - name and description cannot be changed
                     </p>
@@ -62,8 +62,8 @@ const isCategorySelected = (category) => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-dark-card shadow-sm sm:rounded-lg border border-gray-200 dark:border-dark-border overflow-hidden">
                     <form @submit.prevent="submit" class="p-6 space-y-6">
                         <!-- Name (disabled for system roles) -->

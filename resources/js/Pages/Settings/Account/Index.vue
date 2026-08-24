@@ -77,13 +77,13 @@ const submitPreferences = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+            <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                 Account Settings
             </h2>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Tabs -->
                 <div class="mb-6 border-b border-gray-200 dark:border-dark-border">
                     <nav class="-mb-px flex space-x-8">
@@ -135,7 +135,7 @@ const submitPreferences = () => {
                 </div>
 
                 <!-- Profile Tab -->
-                <div v-show="activeTab === 'profile'" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div v-show="activeTab === 'profile'" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <form @submit.prevent="submitProfile" class="p-6 space-y-6">
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Profile Information</h3>
@@ -174,7 +174,7 @@ const submitPreferences = () => {
                 </div>
 
                 <!-- Password Tab -->
-                <div v-show="activeTab === 'password'" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div v-show="activeTab === 'password'" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <form @submit.prevent="submitPassword" class="p-6 space-y-6">
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Change Password</h3>
@@ -227,7 +227,7 @@ const submitPreferences = () => {
                 </div>
 
                 <!-- Notifications Tab -->
-                <div v-show="activeTab === 'notifications'" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div v-show="activeTab === 'notifications'" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <form @submit.prevent="submitNotifications" class="p-6 space-y-6">
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Notification Preferences</h3>
@@ -303,7 +303,7 @@ const submitPreferences = () => {
                 </div>
 
                 <!-- Preferences Tab -->
-                <div v-show="activeTab === 'preferences'" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div v-show="activeTab === 'preferences'" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <form @submit.prevent="submitPreferences" class="p-6 space-y-6">
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">User Preferences</h3>

@@ -21,9 +21,9 @@ const formatCurrency = (value) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="font-semibold text-2xl text-gray-900 dark:text-gray-100">Inventory Valuation Report</h2>
+                    <h2 class="font-semibold text-xl sm:text-2xl text-gray-900 dark:text-gray-100">Inventory Valuation Report</h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Total stock value and profit analysis</p>
                 </div>
                 <Link
@@ -35,8 +35,8 @@ const formatCurrency = (value) => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
                     <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-sm p-6">
@@ -93,7 +93,7 @@ const formatCurrency = (value) => {
                     <div class="p-6 border-b border-gray-200 dark:border-dark-border">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Product Details</h3>
                     </div>
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto responsive-table">
                         <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
                             <thead class="bg-gray-50 dark:bg-dark-bg/50">
                                 <tr>

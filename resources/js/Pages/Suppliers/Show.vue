@@ -27,11 +27,11 @@ const formatCurrency = (value) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                     {{ supplier.name }}
                 </h2>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <Link
                         :href="route('suppliers.edit', supplier.id)"
                         class="inline-flex items-center px-4 py-2 bg-primary-400 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500"
@@ -48,8 +48,8 @@ const formatCurrency = (value) => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Plugin Slot: Header -->
                 <PluginSlot slot="header" :components="pluginComponents?.header" />
 
@@ -57,7 +57,7 @@ const formatCurrency = (value) => {
                     <!-- Main Info -->
                     <div class="lg:col-span-2 space-y-6">
                         <!-- Contact Information -->
-                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Contact Information</h3>
                             </div>
@@ -94,7 +94,7 @@ const formatCurrency = (value) => {
                         </div>
 
                         <!-- Address -->
-                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Address</h3>
                             </div>
@@ -115,11 +115,11 @@ const formatCurrency = (value) => {
                         </div>
 
                         <!-- Products -->
-                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Products ({{ supplier.products?.length || 0 }})</h3>
                             </div>
-                            <div class="overflow-x-auto">
+                            <div class="overflow-x-auto responsive-table">
                                 <table v-if="supplier.products?.length > 0" class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
                                     <thead class="bg-gray-50 dark:bg-dark-bg">
                                         <tr>
@@ -152,7 +152,7 @@ const formatCurrency = (value) => {
                     <!-- Sidebar -->
                     <div class="space-y-6">
                         <!-- Status Card -->
-                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Status</h3>
                             </div>
@@ -171,7 +171,7 @@ const formatCurrency = (value) => {
                         </div>
 
                         <!-- Business Details Card -->
-                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Business Details</h3>
                             </div>
@@ -192,7 +192,7 @@ const formatCurrency = (value) => {
                         </div>
 
                         <!-- Notes Card -->
-                        <div v-if="supplier.notes" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div v-if="supplier.notes" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Notes</h3>
                             </div>
@@ -202,7 +202,7 @@ const formatCurrency = (value) => {
                         </div>
 
                         <!-- Actions Card -->
-                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                                 <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Actions</h3>
                             </div>

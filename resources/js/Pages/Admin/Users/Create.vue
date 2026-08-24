@@ -31,8 +31,8 @@ const submit = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-2xl text-gray-900 dark:text-gray-100">Create User</h2>
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 class="font-semibold text-xl sm:text-2xl text-gray-900 dark:text-gray-100">Create User</h2>
                 <Link
                     :href="route('users.index')"
                     class="px-4 py-2 bg-dark-bg hover:bg-gray-100 dark:hover:bg-dark-bg/80 text-gray-600 dark:text-gray-300 font-medium rounded-lg transition border border-gray-200 dark:border-dark-border"
@@ -42,8 +42,8 @@ const submit = () => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-3xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-3xl mx-auto px-3 sm:px-6 lg:px-8">
                 <div class="bg-white dark:bg-dark-card shadow-sm sm:rounded-lg border border-gray-200 dark:border-dark-border overflow-hidden">
                     <form @submit.prevent="submit" class="p-6 space-y-6">
                         <!-- Name -->

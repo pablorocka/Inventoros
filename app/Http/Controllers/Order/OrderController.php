@@ -35,14 +35,18 @@ class OrderController extends Controller
             ->when($request->input('source'), function ($query, $source) {
                 $query->bySource($source);
             })
+            ->when($request->input('payment_status'), function ($query, $paymentStatus) {
+                $query->byPaymentStatus($paymentStatus);
+            })
             ->latest('order_date')
             ->paginate(config('limits.pagination.default'))
             ->withQueryString();
 
         return Inertia::render('Orders/Index', [
             'orders' => $orders,
-            'filters' => $request->only(['search', 'status', 'source']),
+            'filters' => $request->only(['search', 'status', 'source', 'payment_status']),
             'statuses' => ['pending', 'processing', 'shipped', 'delivered', 'cancelled'],
+            'paymentStatuses' => ['pending', 'partial', 'paid'],
             'sources' => ['manual', 'ebay', 'shopify', 'amazon'],
             'pluginComponents' => [
                 'header' => get_page_components('orders.index', 'header'),
@@ -70,6 +74,41 @@ class OrderController extends Controller
     }
 
     /**
+     * Compute the global discount amount for an order.
+     * Validates that the discount does not exceed the subtotal.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    private function computeDiscountAmount(array $validated, float $subtotal): float
+    {
+        $type = $validated['discount_type'] ?? null;
+        $value = (float) ($validated['discount_value'] ?? 0);
+
+        if (!$type || $value <= 0) {
+            return 0.0;
+        }
+
+        if ($type === 'percent') {
+            if ($value > 100) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'discount_value' => 'Percentage discount cannot exceed 100%.',
+                ]);
+            }
+
+            return round($subtotal * $value / 100, 2);
+        }
+
+        // fixed
+        if ($value > $subtotal + 0.01) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'discount_value' => 'Discount cannot exceed the order subtotal.',
+            ]);
+        }
+
+        return round(min($value, $subtotal), 2);
+    }
+
+    /**
      * Store a newly created resource in storage.
      */
     public function store(Request $request)
@@ -82,6 +121,8 @@ class OrderController extends Controller
             'order_date' => 'required|date',
             'shipping' => 'nullable|numeric|min:0',
             'tax' => 'nullable|numeric|min:0',
+            'discount_type' => 'nullable|in:percent,fixed',
+            'discount_value' => 'nullable|numeric|min:0|required_with:discount_type',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.product_id' => 'required|exists:products,id',
@@ -137,7 +178,9 @@ class OrderController extends Controller
                 $validated['subtotal'] = $subtotal;
                 $validated['tax'] = $validated['tax'] ?? 0;
                 $validated['shipping'] = $validated['shipping'] ?? 0;
-                $validated['total'] = $subtotal + $validated['tax'] + $validated['shipping'];
+                $validated['discount_value'] = $validated['discount_value'] ?? 0;
+                $validated['discount_amount'] = $this->computeDiscountAmount($validated, $subtotal);
+                $validated['total'] = round($subtotal - $validated['discount_amount'] + $validated['tax'] + $validated['shipping'], 2);
 
                 $order = Order::create($validated);
                 $order->items()->createMany($orderItems);
@@ -147,6 +190,8 @@ class OrderController extends Controller
 
             return redirect()->route('orders.index')
                 ->with('success', 'Order created successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
         } catch (\Exception $e) {
             return redirect()->back()
                 ->withInput()
@@ -159,7 +204,7 @@ class OrderController extends Controller
      */
     public function show(Order $order): Response
     {
-        $order->load(['items.product', 'organization', 'creator', 'approver']);
+        $order->load(['items.product', 'organization', 'creator', 'approver', 'payments.creator']);
 
         // Ensure user can only view orders from their organization
         if ($order->organization_id !== auth()->user()->organization_id) {
@@ -169,9 +214,13 @@ class OrderController extends Controller
         // Check if user can approve orders
         $canApprove = auth()->user()->hasPermission('approve_orders');
 
+        // Check if user can register/delete payments
+        $canManagePayments = auth()->user()->hasPermission('manage_order_payments');
+
         return Inertia::render('Orders/Show', [
             'order' => $order,
             'canApprove' => $canApprove,
+            'canManagePayments' => $canManagePayments,
             'pluginComponents' => [
                 'header' => get_page_components('orders.show', 'header'),
                 'sidebar' => get_page_components('orders.show', 'sidebar'),
@@ -224,6 +273,8 @@ class OrderController extends Controller
             'order_date' => 'required|date',
             'shipping' => 'nullable|numeric|min:0',
             'tax' => 'nullable|numeric|min:0',
+            'discount_type' => 'nullable|in:percent,fixed',
+            'discount_value' => 'nullable|numeric|min:0|required_with:discount_type',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
             'items.*.id' => 'nullable|exists:order_items,id',
@@ -308,7 +359,16 @@ class OrderController extends Controller
         $validated['subtotal'] = $subtotal;
         $validated['tax'] = $validated['tax'] ?? 0;
         $validated['shipping'] = $validated['shipping'] ?? 0;
-        $validated['total'] = $subtotal + $validated['tax'] + $validated['shipping'];
+        $validated['discount_value'] = $validated['discount_value'] ?? 0;
+        $validated['discount_amount'] = $this->computeDiscountAmount($validated, $subtotal);
+        $validated['total'] = round($subtotal - $validated['discount_amount'] + $validated['tax'] + $validated['shipping'], 2);
+
+        // The new total cannot be lower than what has already been paid
+        if ((float) $order->amount_paid > $validated['total'] + 0.01) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'total' => 'The new order total ($' . number_format($validated['total'], 2) . ') cannot be lower than the amount already paid ($' . number_format((float) $order->amount_paid, 2) . '). Remove payments first.',
+            ]);
+        }
 
         // Update order timestamps based on status
         if ($validated['status'] === 'shipped' && !$order->shipped_at) {
@@ -318,6 +378,9 @@ class OrderController extends Controller
         }
 
         $order->update($validated);
+
+        // Total may have changed: refresh accumulated payment status
+        $order->recalculatePaymentStatus();
 
         return redirect()->route('orders.index')
             ->with('success', 'Order updated successfully.');

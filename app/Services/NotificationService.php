@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Auth\User;
+use App\Models\User;
 use App\Models\Inventory\Product;
 use App\Models\Notification;
 use App\Models\Order\Order;
@@ -39,12 +39,9 @@ class NotificationService
     {
         // Get all users in the organization with manage_stock permission
         $users = User::where('organization_id', $product->organization_id)
-            ->whereHas('role', function ($query) {
-                $query->whereHas('permissions', function ($q) {
-                    $q->where('name', 'manage_stock');
-                });
-            })
-            ->get();
+            ->with('roles')
+            ->get()
+            ->filter(fn($user) => $user->hasPermission('manage_stock'));
 
         foreach ($users as $user) {
             // Check if user wants low stock alerts
@@ -78,12 +75,9 @@ class NotificationService
     {
         // Get all users in the organization with manage_stock permission
         $users = User::where('organization_id', $product->organization_id)
-            ->whereHas('role', function ($query) {
-                $query->whereHas('permissions', function ($q) {
-                    $q->where('name', 'manage_stock');
-                });
-            })
-            ->get();
+            ->with('roles')
+            ->get()
+            ->filter(fn($user) => $user->hasPermission('manage_stock'));
 
         foreach ($users as $user) {
             // Check if user wants low stock alerts
@@ -115,13 +109,10 @@ class NotificationService
     {
         // Get all users in the organization with view_orders permission
         $users = User::where('organization_id', $order->organization_id)
-            ->whereHas('role', function ($query) {
-                $query->whereHas('permissions', function ($q) {
-                    $q->where('name', 'view_orders');
-                });
-            })
+            ->with('roles')
             ->where('id', '!=', $order->created_by) // Don't notify the creator
-            ->get();
+            ->get()
+            ->filter(fn($user) => $user->hasPermission('view_orders'));
 
         $creatorName = $order->creator ? $order->creator->name : 'Unknown';
 

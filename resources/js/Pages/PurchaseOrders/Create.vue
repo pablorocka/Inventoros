@@ -25,6 +25,26 @@ const form = useForm({
     items: [],
 });
 
+// Product Filter
+const productSearch = ref('');
+const showDropdown = ref(false);
+
+const filteredProducts = computed(() => {
+    if (!productSearch.value) return [];
+
+    return props.products.filter(p =>
+        p.name.toLowerCase().includes(productSearch.value.toLowerCase()) ||
+        p.sku?.toLowerCase().includes(productSearch.value.toLowerCase())
+    );
+});
+
+const selectProduct = (product) => {
+    selectedProductId.value = product.id;
+    productSearch.value = `${product.name} (${product.sku})`;
+    unitCost.value = product.purchase_price || product.price || 0;
+    showDropdown.value = false;
+};
+
 const showScanner = ref(false);
 const selectedProductId = ref('');
 const quantity = ref(1);
@@ -73,9 +93,11 @@ const addItem = () => {
 
     // Reset inputs
     selectedProductId.value = '';
+    productSearch.value = '';
     quantity.value = 1;
     unitCost.value = 0;
     supplierSku.value = '';
+    showDropdown.value = false;
 };
 
 const removeItem = (index) => {
@@ -124,8 +146,8 @@ const formatCurrency = (value) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                     Create Purchase Order
                 </h2>
                 <Link
@@ -137,14 +159,14 @@ const formatCurrency = (value) => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Plugin Slot: Header -->
                 <PluginSlot slot="header" :components="pluginComponents?.header" />
 
                 <form @submit.prevent="submit" class="space-y-6">
                     <!-- Order Details -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Order Details</h3>
                         </div>
@@ -220,7 +242,7 @@ const formatCurrency = (value) => {
                     </div>
 
                     <!-- Add Items -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border shadow-lg rounded-lg">
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border flex items-center justify-between">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Add Items</h3>
                             <button
@@ -238,17 +260,31 @@ const formatCurrency = (value) => {
                             <div class="grid grid-cols-1 gap-4 md:grid-cols-6">
                                 <div class="md:col-span-2">
                                     <InputLabel for="product" value="Product" />
-                                    <select
-                                        id="product"
-                                        v-model="selectedProductId"
-                                        @change="onProductSelected"
-                                        class="mt-1 block w-full rounded-md bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400"
-                                    >
-                                        <option value="">Select a product</option>
-                                        <option v-for="product in products" :key="product.id" :value="product.id">
-                                            {{ product.name }} ({{ product.sku || 'No SKU' }})
-                                        </option>
-                                    </select>
+				    <div class="relative">
+				        <input
+					    v-model="productSearch"
+					    @focus="showDropdown = true"
+					    @blur="setTimeout(() => showDropdown = false, 200)"
+					    type="text"
+					    placeholder="Search product..."
+					    class="w-full border rounded px-3 py-2"
+					    />
+
+					    <div
+					        v-if="showDropdown && filteredProducts.length"
+					        class="absolute z-10 w-full bg-white border mt-1 rounded shadow max-h-60 overflow-auto"
+					        >
+					    <div
+					        v-for="product in filteredProducts"
+					        :key="product.id"
+					        @click="selectProduct(product)"
+					        class="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+					        >
+					        <div class="font-medium">{{ product.name }}</div>
+					        <div class="text-xs text-gray-500">{{ product.sku }}</div>
+					    </div>
+					    </div>
+				    </div>
                                 </div>
 
                                 <div>
@@ -302,11 +338,11 @@ const formatCurrency = (value) => {
                     </div>
 
                     <!-- Items Table -->
-                    <div v-if="form.items.length > 0" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                    <div v-if="form.items.length > 0" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Order Items ({{ form.items.length }})</h3>
                         </div>
-                        <div class="overflow-x-auto">
+                        <div class="overflow-x-auto responsive-table">
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
                                 <thead class="bg-gray-50 dark:bg-dark-bg">
                                     <tr>

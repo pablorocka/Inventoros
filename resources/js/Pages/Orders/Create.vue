@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
+import { onMounted, onBeforeUnmount } from 'vue';
 
 const props = defineProps({
     products: Array,
@@ -15,8 +16,53 @@ const form = useForm({
     order_date: new Date().toISOString().split('T')[0],
     shipping: 0,
     tax: 0,
+    discount_type: null,
+    discount_value: 0,
     notes: '',
     items: [],
+});
+
+watch(() => form.errors, (errors) => {
+    console.log('Validation errors:', errors);
+});
+
+// Product Filter
+const searchQuery = ref('');
+const showDropdown = ref(false);
+
+const filteredProducts = computed(() => {
+    if (!searchQuery.value) {
+        return availableProducts.value; 
+        // limit initial results for performance
+    }
+
+    const query = searchQuery.value.toLowerCase();
+
+    return availableProducts.value
+        .filter(product =>
+            product.name.toLowerCase().includes(query) ||
+            product.sku.toLowerCase().includes(query)
+        );
+});
+
+const selectProduct = (product) => {
+    selectedProduct.value = product.id;
+    searchQuery.value = `${product.name} (${product.sku})`;
+    showDropdown.value = false;
+};
+
+const handleClickOutside = (event) => {
+    if (!event.target.closest('.relative')) {
+        showDropdown.value = false;
+    }
+};
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside);
+});
+
+onBeforeUnmount(() => {
+    document.removeEventListener('click', handleClickOutside);
 });
 
 // Product selection
@@ -48,6 +94,7 @@ const addItem = () => {
 
     // Reset selection
     selectedProduct.value = null;
+    searchQuery.value = '';
     quantity.value = 1;
 };
 
@@ -74,8 +121,17 @@ const subtotal = computed(() => {
     }, 0);
 });
 
+const discountAmount = computed(() => {
+    const value = parseFloat(form.discount_value || 0);
+    if (!form.discount_type || value <= 0) return 0;
+    if (form.discount_type === 'percent') {
+        return Math.round(subtotal.value * Math.min(value, 100)) / 100;
+    }
+    return Math.min(value, subtotal.value);
+});
+
 const total = computed(() => {
-    return subtotal.value + parseFloat(form.tax || 0) + parseFloat(form.shipping || 0);
+    return subtotal.value - discountAmount.value + parseFloat(form.tax || 0) + parseFloat(form.shipping || 0);
 });
 
 const submit = () => {
@@ -90,7 +146,9 @@ const submit = () => {
 };
 
 const availableProducts = computed(() => {
-    return props.products.filter(p => p.stock > 0);
+    return [...props.products]
+    .filter(p => p.stock > 0)
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
 });
 </script>
 
@@ -99,8 +157,8 @@ const availableProducts = computed(() => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                     Create Order
                 </h2>
                 <Link
@@ -115,8 +173,8 @@ const availableProducts = computed(() => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <form @submit.prevent="submit">
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <!-- Left Column: Customer & Order Info -->
@@ -189,15 +247,34 @@ const availableProducts = computed(() => {
                                             <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
                                                 Select Product
                                             </label>
-                                            <select
-                                                v-model="selectedProduct"
-                                                class="block w-full rounded-md bg-white dark:bg-dark-card border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400"
-                                            >
-                                                <option :value="null">Choose a product...</option>
-                                                <option v-for="product in availableProducts" :key="product.id" :value="product.id">
-                                                    {{ product.name }} ({{ product.sku }}) - Stock: {{ product.stock }} - ${{ product.price }}
-                                                </option>
-                                            </select>
+                                            <div class="relative">
+                                                <input
+                                                        type="text"
+                                                        v-model="searchQuery"
+                                                        @focus="showDropdown = true"
+                                                        placeholder="Search product by name or SKU..."
+                                                        class="block w-full rounded-md bg-white dark:bg-dark-card border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400"
+                                                        />
+
+                                                <div
+                                                        v-if="showDropdown && filteredProducts.length"
+                                                        class="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-md shadow-lg"
+                                                        >
+                                                        <div
+                                                                v-for="product in filteredProducts"
+                                                                :key="product.id"
+                                                                @click="selectProduct(product)"
+                                                                class="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-bg transition"
+                                                                >
+                                                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                                    {{ product.name }}
+                                                                </div>
+                                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                                SKU: {{ product.sku }} | Stock: {{ product.stock }} | ${{ product.price }}
+                                                            </div>
+                                                        </div>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div class="md:col-span-3">
@@ -229,52 +306,76 @@ const availableProducts = computed(() => {
                                     <div
                                         v-for="(item, index) in form.items"
                                         :key="index"
-                                        class="flex items-center gap-4 p-4 bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg"
+                                        class="flex flex-col md:flex-row md:items-center gap-4 p-4 bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg"
                                     >
                                         <div class="flex-1">
                                             <p class="font-medium text-gray-900 dark:text-gray-100">{{ item.product_name }}</p>
                                             <p class="text-sm text-gray-500 dark:text-gray-400">SKU: {{ item.sku }}</p>
                                         </div>
 
-                                        <div class="w-24">
-                                            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Qty</label>
-                                            <input
-                                                :value="item.quantity"
-                                                @input="updateItemQuantity(index, parseInt($event.target.value))"
-                                                type="number"
-                                                min="1"
-                                                class="block w-full rounded-md bg-white dark:bg-dark-card border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400 text-sm"
-                                            />
+                                        <div class="w-full md:w-auto md:flex md:gap-4">
+
+                                            <!-- Mobile: 2-column grid -->
+                                            <div class="grid grid-cols-2 gap-4 md:flex md:gap-4 w-full">
+
+                                                <!-- Qty -->
+                                                <div class="md:w-24">
+                                                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                        Qty
+                                                    </label>
+                                                    <input
+                                                            :value="item.quantity"
+                                                            @input="updateItemQuantity(index, parseInt($event.target.value))"
+                                                            type="number"
+                                                            min="1"
+                                                            class="block w-full rounded-md bg-white dark:bg-dark-card border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400 text-sm"
+                                                            />
+                                                </div>
+
+                                                <!-- Unit Price -->
+                                                <div class="md:w-32">
+                                                    <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                                        Unit Price
+                                                    </label>
+                                                    <input
+                                                            :value="item.unit_price"
+                                                            @input="updateItemPrice(index, $event.target.value)"
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0"
+                                                            class="block w-full rounded-md bg-white dark:bg-dark-card border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400 text-sm"
+                                                            />
+                                                </div>
+
+                                            </div>
                                         </div>
 
-                                        <div class="w-32">
-                                            <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Unit Price</label>
-                                            <input
-                                                :value="item.unit_price"
-                                                @input="updateItemPrice(index, $event.target.value)"
-                                                type="number"
-                                                step="0.01"
-                                                min="0"
-                                                class="block w-full rounded-md bg-white dark:bg-dark-card border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400 text-sm"
-                                            />
-                                        </div>
-
-                                        <div class="w-32 text-right">
+                                        <div class="w-full md:w-32 md:text-right">
                                             <label class="block text-xs text-gray-500 dark:text-gray-400 mb-1">Total</label>
                                             <p class="font-semibold text-gray-900 dark:text-gray-100">
                                                 ${{ (item.quantity * item.unit_price).toFixed(2) }}
                                             </p>
                                         </div>
 
-                                        <button
-                                            type="button"
-                                            @click="removeItem(index)"
-                                            class="p-2 text-red-400 hover:text-red-300 hover:bg-red-900/20 rounded-md transition"
-                                        >
-                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                            </svg>
-                                        </button>
+                                        <div class="w-full mt-3 md:mt-0 md:w-auto md:flex md:items-center">
+                                            <button
+                                                    type="button"
+                                                    @click="removeItem(index)"
+                                                    class="w-full md:w-auto flex items-center justify-center gap-2 px-3 py-2
+                                                           text-sm font-medium
+                                                           text-red-500 md:text-red-400
+                                                           bg-red-50 md:bg-transparent
+                                                           hover:bg-red-100 md:hover:bg-red-900/20
+                                                           rounded-md transition"
+                                                    >
+                                                    <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                                                                             d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+
+                                                <span class="md:hidden">Remove Item</span>
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -365,6 +466,42 @@ const availableProducts = computed(() => {
                                     <div class="flex justify-between text-sm">
                                         <span class="text-gray-600 dark:text-gray-300">Subtotal</span>
                                         <span class="font-medium text-gray-900 dark:text-gray-100">${{ subtotal.toFixed(2) }}</span>
+                                    </div>
+
+                                    <div>
+                                        <div class="flex justify-between items-center text-sm mb-1">
+                                            <label for="discount_value" class="text-gray-600 dark:text-gray-300">Discount</label>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <select
+                                                id="discount_type"
+                                                v-model="form.discount_type"
+                                                class="rounded-md bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400 text-sm"
+                                            >
+                                                <option :value="null">None</option>
+                                                <option value="percent">%</option>
+                                                <option value="fixed">$</option>
+                                            </select>
+                                            <input
+                                                id="discount_value"
+                                                v-model.number="form.discount_value"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                :max="form.discount_type === 'percent' ? 100 : undefined"
+                                                :disabled="!form.discount_type"
+                                                class="block w-full rounded-md bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400 text-sm disabled:opacity-50"
+                                            />
+                                        </div>
+                                        <p v-if="discountAmount > 0" class="mt-1 text-sm text-red-500 dark:text-red-400">
+                                            -${{ discountAmount.toFixed(2) }}
+                                        </p>
+                                        <p v-if="form.errors.discount_value" class="mt-1 text-sm text-red-400">
+                                            {{ form.errors.discount_value }}
+                                        </p>
+                                        <p v-if="form.errors.discount_type" class="mt-1 text-sm text-red-400">
+                                            {{ form.errors.discount_type }}
+                                        </p>
                                     </div>
 
                                     <div>

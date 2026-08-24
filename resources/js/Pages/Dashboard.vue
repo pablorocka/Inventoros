@@ -2,6 +2,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PluginSlot from '@/Components/PluginSlot.vue';
 import { Head, Link } from '@inertiajs/vue3';
+import { usePermissions } from '@/composables/usePermissions';
+
+const { hasPermission } = usePermissions();
+
 
 const props = defineProps({
     stats: Object,
@@ -44,12 +48,12 @@ const formatCompactCurrency = (value) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="text-xl font-semibold leading-tight text-gray-900 dark:text-gray-100">
+            <h2 class="text-lg sm:text-xl font-semibold leading-tight text-gray-900 dark:text-gray-100">
                 Dashboard
             </h2>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
             <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <!-- Plugin Slot: Header (top of dashboard) -->
                 <PluginSlot slot="header" :components="pluginComponents?.header" />
@@ -58,9 +62,9 @@ const formatCompactCurrency = (value) => {
                 <PluginSlot slot="before-stats" :components="pluginComponents?.beforeStats" />
 
                 <!-- Stats Grid -->
-                <div class="grid grid-cols-1 gap-6 mb-6 sm:grid-cols-2 lg:grid-cols-4">
+                <div v-if="hasPermission('view_reports')" class="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:grid-cols-2 lg:grid-cols-4">
                     <!-- Total Products -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:shadow-md dark:hover:border-primary-400/50 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:shadow-md dark:hover:border-primary-400/50 transition">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
@@ -79,7 +83,7 @@ const formatCompactCurrency = (value) => {
                     </div>
 
                     <!-- Total Value -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:border-primary-400/50 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:border-primary-400/50 transition">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
@@ -98,7 +102,7 @@ const formatCompactCurrency = (value) => {
                     </div>
 
                     <!-- Low Stock -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:border-red-400/50 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:border-red-400/50 transition">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
@@ -117,7 +121,7 @@ const formatCompactCurrency = (value) => {
                     </div>
 
                     <!-- Categories -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:shadow-md dark:hover:border-accent-purple/50 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:shadow-md dark:hover:border-accent-purple/50 transition">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
@@ -136,7 +140,7 @@ const formatCompactCurrency = (value) => {
                     </div>
 
                     <!-- Total Orders -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:border-primary-400/30 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:border-primary-400/30 transition">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
@@ -155,7 +159,7 @@ const formatCompactCurrency = (value) => {
                     </div>
 
                     <!-- Revenue This Month -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:border-primary-400/30 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:border-primary-400/30 transition">
                         <div class="p-6">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0">
@@ -178,9 +182,9 @@ const formatCompactCurrency = (value) => {
                 <PluginSlot slot="after-stats" :components="pluginComponents?.afterStats" />
 
                 <!-- Secondary Stats -->
-                <div class="grid grid-cols-1 gap-6 mb-6 sm:grid-cols-2 lg:grid-cols-5">
+                <div v-if="hasPermission('view_reports')" class="grid grid-cols-1 gap-4 sm:gap-6 mb-6 sm:grid-cols-2 lg:grid-cols-5">
                     <!-- Pending Orders -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:border-amber-400/30 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:border-amber-400/30 transition">
                         <Link :href="route('orders.index', { status: 'pending' })" class="block p-4">
                             <p class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Pending Orders</p>
                             <p class="text-xl font-semibold text-amber-400 mt-1">
@@ -190,7 +194,7 @@ const formatCompactCurrency = (value) => {
                     </div>
 
                     <!-- Categories -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:shadow-md dark:hover:border-accent-purple/50 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:shadow-md dark:hover:border-accent-purple/50 transition">
                         <Link :href="route('categories.index')" class="block p-4">
                             <p class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Categories</p>
                             <p class="text-xl font-semibold text-accent-purple mt-1">
@@ -200,7 +204,7 @@ const formatCompactCurrency = (value) => {
                     </div>
 
                     <!-- Locations -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:border-orange-400/30 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:border-orange-400/30 transition">
                         <Link :href="route('locations.index')" class="block p-4">
                             <p class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Locations</p>
                             <p class="text-xl font-semibold text-orange-400 mt-1">
@@ -210,7 +214,7 @@ const formatCompactCurrency = (value) => {
                     </div>
 
                     <!-- Inventory Value -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:border-green-400/30 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:border-green-400/30 transition">
                         <div class="p-4">
                             <p class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Inventory Value</p>
                             <p class="text-xl font-semibold text-green-400 mt-1">
@@ -220,7 +224,7 @@ const formatCompactCurrency = (value) => {
                     </div>
 
                     <!-- Low Stock Alert -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:border-red-400/30 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:border-red-400/30 transition">
                         <Link :href="route('products.index', { low_stock: '1' })" class="block p-4">
                             <p class="text-xs font-medium text-gray-600 dark:text-gray-400 uppercase tracking-wider">Low Stock Items</p>
                             <p class="text-xl font-semibold text-red-400 mt-1">
@@ -234,9 +238,9 @@ const formatCompactCurrency = (value) => {
                 <PluginSlot slot="before-content" :components="pluginComponents?.beforeContent" />
 
                 <!-- Three Column Layout -->
-                <div class="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div class="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
                     <!-- Recent Orders -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:border-primary-400/30 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:border-primary-400/30 transition">
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -306,7 +310,7 @@ const formatCompactCurrency = (value) => {
                     </div>
 
                     <!-- Low Stock Alert -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:border-red-400/30 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:border-red-400/30 transition">
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -355,7 +359,7 @@ const formatCompactCurrency = (value) => {
                     </div>
 
                     <!-- Recent Products -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:border-primary-400/30 transition">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:border-primary-400/30 transition">
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -414,7 +418,7 @@ const formatCompactCurrency = (value) => {
                 <PluginSlot slot="after-content" :components="pluginComponents?.afterContent" />
 
                 <!-- Stock by Category -->
-                <div v-if="stockByCategory.length > 0" class="mt-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg hover:border-accent-purple/30 transition">
+                <div v-if="hasPermission('manage_stock') && stockByCategory.length > 0" class="mt-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg hover:border-accent-purple/30 transition">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                             Stock Value by Category
@@ -440,7 +444,7 @@ const formatCompactCurrency = (value) => {
                 </div>
 
                 <!-- Quick Actions -->
-                <div class="mt-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg sm:rounded-lg">
+                <div class="mt-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-sm dark:shadow-lg rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                             Quick Actions

@@ -94,11 +94,11 @@ const statusLabels = {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                     Receive Items - {{ purchaseOrder.po_number }}
                 </h2>
-                <div class="flex items-center gap-2">
+                <div class="flex flex-wrap items-center gap-2">
                     <button
                         @click="showScanner = true"
                         class="inline-flex items-center px-4 py-2 bg-primary-400 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500"
@@ -118,13 +118,13 @@ const statusLabels = {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Plugin Slot: Header -->
                 <PluginSlot slot="header" :components="pluginComponents?.header" />
 
                 <!-- Order Summary -->
-                <div class="mb-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div class="mb-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <div class="p-6">
                         <div class="flex flex-wrap items-center justify-between gap-4">
                             <div>
@@ -149,7 +149,7 @@ const statusLabels = {
 
                 <!-- Receiving Form -->
                 <form @submit.prevent="submit">
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border flex items-center justify-between">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Items to Receive</h3>
                             <div class="flex items-center gap-2">
@@ -169,7 +169,7 @@ const statusLabels = {
                                 </button>
                             </div>
                         </div>
-                        <div class="overflow-x-auto">
+                        <div class="overflow-x-auto responsive-table">
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
                                 <thead class="bg-gray-50 dark:bg-dark-bg">
                                     <tr>

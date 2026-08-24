@@ -48,9 +48,9 @@ const getStatusBadgeClass = (status) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="font-semibold text-2xl text-gray-900 dark:text-gray-100">Sales Analysis Report</h2>
+                    <h2 class="font-semibold text-xl sm:text-2xl text-gray-900 dark:text-gray-100">Sales Analysis Report</h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Revenue and sales performance</p>
                 </div>
                 <Link
@@ -62,8 +62,8 @@ const getStatusBadgeClass = (status) => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Date Filter -->
                 <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-sm p-6 mb-6">
                     <form @submit.prevent="applyFilters" class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -154,7 +154,7 @@ const getStatusBadgeClass = (status) => {
                 <!-- Daily Sales Trend -->
                 <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-sm p-6">
                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Daily Sales Trend</h3>
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto responsive-table">
                         <table class="min-w-full">
                             <thead>
                                 <tr class="border-b border-gray-200 dark:border-dark-border">

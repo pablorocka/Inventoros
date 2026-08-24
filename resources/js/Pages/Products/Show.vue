@@ -118,11 +118,11 @@ const totalVariantStock = computed(() => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                     Product Details
                 </h2>
-                <div class="flex gap-3">
+                <div class="flex flex-wrap gap-2 sm:gap-3">
                     <Link
                         :href="route('products.edit', product.id)"
                         class="inline-flex items-center px-4 py-2 bg-primary-400 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500 transition"
@@ -145,8 +145,8 @@ const totalVariantStock = computed(() => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Plugin Slot: Header -->
                 <PluginSlot slot="header" :components="pluginComponents?.header" />
 
@@ -154,7 +154,7 @@ const totalVariantStock = computed(() => {
                     <!-- Main Info -->
                     <div class="lg:col-span-2 space-y-6">
                         <!-- Basic Information -->
-                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="p-6">
                                 <div class="flex items-start justify-between mb-4">
                                     <div>
@@ -183,7 +183,7 @@ const totalVariantStock = computed(() => {
                                     <p class="text-sm text-yellow-400">{{ product.notes }}</p>
                                 </div>
 
-                                <div class="grid grid-cols-2 gap-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <div>
                                         <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Category</h4>
                                         <p class="text-gray-900 dark:text-gray-100">
@@ -201,12 +201,12 @@ const totalVariantStock = computed(() => {
                         </div>
 
                         <!-- Pricing -->
-                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                                     Pricing Information
                                 </h3>
-                                <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                                     <div>
                                         <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Selling Price</h4>
                                         <p class="text-2xl font-bold text-gray-900 dark:text-gray-100">
@@ -228,7 +228,7 @@ const totalVariantStock = computed(() => {
                                 </div>
 
                                 <!-- Profit Information -->
-                                <div v-if="product.purchase_price && product.price" class="grid grid-cols-3 gap-4 p-4 bg-green-900/20 rounded-lg border border-green-800">
+                                <div v-if="product.purchase_price && product.price" class="grid grid-cols-1 sm:grid-cols-3 gap-4 p-4 bg-green-900/20 rounded-lg border border-green-800">
                                     <div>
                                         <h4 class="text-xs font-medium text-green-400 mb-1">Profit per Unit</h4>
                                         <p class="text-lg font-bold text-green-400">
@@ -252,7 +252,7 @@ const totalVariantStock = computed(() => {
                                 <!-- Additional Currencies -->
                                 <div v-if="product.price_in_currencies && Object.keys(product.price_in_currencies).length > 0" class="mt-6">
                                     <h4 class="text-sm font-medium text-gray-500 dark:text-gray-400 mb-3">Alternative Currencies</h4>
-                                    <div class="grid grid-cols-3 gap-3">
+                                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                         <div
                                             v-for="(price, currency) in product.price_in_currencies"
                                             :key="currency"
@@ -269,7 +269,7 @@ const totalVariantStock = computed(() => {
                         </div>
 
                         <!-- Product Variants -->
-                        <div v-if="product.has_variants && variants.length > 0" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div v-if="product.has_variants && variants.length > 0" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="p-6">
                                 <div class="flex items-center justify-between mb-4">
                                     <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -307,7 +307,7 @@ const totalVariantStock = computed(() => {
                         <PluginSlot slot="sidebar" :components="pluginComponents?.sidebar" />
 
                         <!-- Product Images -->
-                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                                     Product Images
@@ -320,7 +320,7 @@ const totalVariantStock = computed(() => {
                         </div>
 
                         <!-- Barcode -->
-                        <div v-if="product.barcode || product.sku" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div v-if="product.barcode || product.sku" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                                     Barcode
@@ -382,7 +382,7 @@ const totalVariantStock = computed(() => {
                         </div>
 
                         <!-- Stock Information -->
-                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                                     Stock Information
@@ -394,7 +394,7 @@ const totalVariantStock = computed(() => {
                                             {{ product.stock }}
                                         </p>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-3">
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                         <div class="p-3 bg-gray-50 dark:bg-dark-bg/50 rounded-lg border border-gray-200 dark:border-dark-border">
                                             <p class="text-xs text-gray-500 dark:text-gray-400 mb-1">Min Stock</p>
                                             <p class="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -419,7 +419,7 @@ const totalVariantStock = computed(() => {
                         </div>
 
                         <!-- Status -->
-                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                        <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                             <div class="p-6">
                                 <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                                     Status
@@ -455,7 +455,7 @@ const totalVariantStock = computed(() => {
                 </div>
 
                 <!-- Activity Timeline -->
-                <div class="mt-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div class="mt-6 bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <div class="p-6">
                         <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
                             Activity History

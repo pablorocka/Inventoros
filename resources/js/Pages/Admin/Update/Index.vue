@@ -157,8 +157,8 @@ const deleteBackup = async (backupFile) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex justify-between items-center">
-                <h2 class="font-semibold text-2xl text-gray-900 dark:text-gray-100">System Update</h2>
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 class="font-semibold text-xl sm:text-2xl text-gray-900 dark:text-gray-100">System Update</h2>
                 <button
                     @click="checkForUpdates"
                     :disabled="isCheckingUpdate"
@@ -169,7 +169,7 @@ const deleteBackup = async (backupFile) => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
             <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
 
                 <!-- Current Version Card -->
@@ -297,7 +297,7 @@ const deleteBackup = async (backupFile) => {
                             Backups are created automatically before each update. You can also create manual backups here.
                         </p>
 
-                        <div v-if="backups && backups.length > 0" class="overflow-x-auto">
+                        <div v-if="backups && backups.length > 0" class="overflow-x-auto responsive-table">
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
                                 <thead class="bg-gray-50 dark:bg-dark-bg/50">
                                     <tr>

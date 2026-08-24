@@ -340,7 +340,7 @@ const getEffectivePurchasePrice = (variant) => {
             </div>
 
             <!-- Variants Table -->
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto responsive-table">
                 <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
                     <thead class="bg-gray-50 dark:bg-dark-bg">
                         <tr>

@@ -50,6 +50,7 @@ enum Permission: string
     case EDIT_ORDERS = 'edit_orders';
     case DELETE_ORDERS = 'delete_orders';
     case APPROVE_ORDERS = 'approve_orders';
+    case MANAGE_ORDER_PAYMENTS = 'manage_order_payments';
 
     // Settings
     case VIEW_SETTINGS = 'view_settings';
@@ -111,6 +112,7 @@ enum Permission: string
             self::EDIT_ORDERS => 'Edit Orders',
             self::DELETE_ORDERS => 'Delete Orders',
             self::APPROVE_ORDERS => 'Approve Orders',
+            self::MANAGE_ORDER_PAYMENTS => 'Manage Order Payments',
 
             self::VIEW_SETTINGS => 'View Settings',
             self::EDIT_SETTINGS => 'Edit Settings',
@@ -171,6 +173,7 @@ enum Permission: string
             self::EDIT_ORDERS => 'Can modify orders',
             self::DELETE_ORDERS => 'Can delete orders',
             self::APPROVE_ORDERS => 'Can approve or reject orders',
+            self::MANAGE_ORDER_PAYMENTS => 'Can register and delete order payments',
 
             self::VIEW_SETTINGS => 'Can view system settings',
             self::EDIT_SETTINGS => 'Can modify system settings',
@@ -202,6 +205,7 @@ enum Permission: string
             self::DELETE_PURCHASE_ORDERS, self::RECEIVE_PURCHASE_ORDERS => 'Purchase Order Management',
             self::VIEW_ORDERS, self::CREATE_ORDERS, self::EDIT_ORDERS, self::DELETE_ORDERS,
             self::APPROVE_ORDERS => 'Order Management',
+            self::MANAGE_ORDER_PAYMENTS => 'Order Management',
             self::VIEW_SETTINGS, self::EDIT_SETTINGS, self::MANAGE_ORGANIZATION => 'Settings',
             self::VIEW_PLUGINS, self::MANAGE_PLUGINS => 'Plugins',
             self::VIEW_REPORTS, self::EXPORT_DATA, self::IMPORT_DATA, self::VIEW_ACTIVITY_LOG => 'Reports & Data',

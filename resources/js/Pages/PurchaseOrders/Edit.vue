@@ -112,8 +112,8 @@ const formatCurrency = (value) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                     Edit Purchase Order
                 </h2>
                 <Link
@@ -125,13 +125,13 @@ const formatCurrency = (value) => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-5xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
                 <PluginSlot slot="header" :components="pluginComponents?.header" />
 
                 <form @submit.prevent="submit" class="space-y-6">
                     <!-- Order Details -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Order Details - {{ purchaseOrder.po_number }}</h3>
                         </div>
@@ -207,7 +207,7 @@ const formatCurrency = (value) => {
                     </div>
 
                     <!-- Add Items -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Add Items</h3>
                         </div>
@@ -279,11 +279,11 @@ const formatCurrency = (value) => {
                     </div>
 
                     <!-- Items Table -->
-                    <div v-if="form.items.length > 0" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                    <div v-if="form.items.length > 0" class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Order Items ({{ form.items.length }})</h3>
                         </div>
-                        <div class="overflow-x-auto">
+                        <div class="overflow-x-auto responsive-table">
                             <table class="min-w-full divide-y divide-gray-200 dark:divide-dark-border">
                                 <thead class="bg-gray-50 dark:bg-dark-bg">
                                     <tr>

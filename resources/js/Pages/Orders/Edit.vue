@@ -16,6 +16,8 @@ const form = useForm({
     order_date: props.order.order_date ? props.order.order_date.split('T')[0] : '',
     shipping: props.order.shipping || 0,
     tax: props.order.tax || 0,
+    discount_type: props.order.discount_type || null,
+    discount_value: parseFloat(props.order.discount_value || 0),
     notes: props.order.notes || '',
     items: props.order.items.map(item => ({
         id: item.id,
@@ -48,8 +50,17 @@ const subtotal = computed(() => {
     }, 0);
 });
 
+const discountAmount = computed(() => {
+    const value = parseFloat(form.discount_value || 0);
+    if (!form.discount_type || value <= 0) return 0;
+    if (form.discount_type === 'percent') {
+        return Math.round(subtotal.value * Math.min(value, 100)) / 100;
+    }
+    return Math.min(value, subtotal.value);
+});
+
 const total = computed(() => {
-    return subtotal.value + parseFloat(form.tax || 0) + parseFloat(form.shipping || 0);
+    return subtotal.value - discountAmount.value + parseFloat(form.tax || 0) + parseFloat(form.shipping || 0);
 });
 
 const addItem = () => {
@@ -86,9 +97,9 @@ const getProductStock = (productId) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+                    <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                         Edit Order
                     </h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
@@ -107,8 +118,8 @@ const getProductStock = (productId) => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <form @submit.prevent="submit">
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <!-- Left Column: Customer Info & Items -->
@@ -387,6 +398,42 @@ const getProductStock = (productId) => {
                                     <div class="flex justify-between text-sm">
                                         <span class="text-gray-600 dark:text-gray-300">Subtotal</span>
                                         <span class="font-medium text-gray-900 dark:text-gray-100">${{ subtotal.toFixed(2) }}</span>
+                                    </div>
+
+                                    <div>
+                                        <div class="flex justify-between items-center text-sm mb-1">
+                                            <label for="discount_value" class="text-gray-600 dark:text-gray-300">Discount</label>
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <select
+                                                id="discount_type"
+                                                v-model="form.discount_type"
+                                                class="rounded-md bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400 text-sm"
+                                            >
+                                                <option :value="null">None</option>
+                                                <option value="percent">%</option>
+                                                <option value="fixed">$</option>
+                                            </select>
+                                            <input
+                                                id="discount_value"
+                                                v-model.number="form.discount_value"
+                                                type="number"
+                                                step="0.01"
+                                                min="0"
+                                                :max="form.discount_type === 'percent' ? 100 : undefined"
+                                                :disabled="!form.discount_type"
+                                                class="block w-full rounded-md bg-gray-50 dark:bg-dark-bg border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400 text-sm disabled:opacity-50"
+                                            />
+                                        </div>
+                                        <p v-if="discountAmount > 0" class="mt-1 text-sm text-red-500 dark:text-red-400">
+                                            -${{ discountAmount.toFixed(2) }}
+                                        </p>
+                                        <p v-if="form.errors.discount_value" class="mt-1 text-sm text-red-400">
+                                            {{ form.errors.discount_value }}
+                                        </p>
+                                        <p v-if="form.errors.discount_type" class="mt-1 text-sm text-red-400">
+                                            {{ form.errors.discount_type }}
+                                        </p>
                                     </div>
 
                                     <div>

@@ -9,14 +9,14 @@ import { Head, Link } from '@inertiajs/vue3';
     <AuthenticatedLayout>
         <template #header>
             <div>
-                <h2 class="font-semibold text-2xl text-gray-900 dark:text-gray-100">Reports & Analytics</h2>
+                <h2 class="font-semibold text-xl sm:text-2xl text-gray-900 dark:text-gray-100">Reports & Analytics</h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Business intelligence and insights</p>
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     <!-- Inventory Valuation Report -->
                     <Link
                         :href="route('reports.inventory-valuation')"
@@ -134,6 +134,56 @@ import { Head, Link } from '@inertiajs/vue3';
                                 </h3>
                                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
                                     Analysis by product category
+                                </p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 group-hover:text-primary-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                    </Link>
+
+                    <!-- Unpaid Orders Report -->
+                    <Link
+                        :href="route('reports.unpaid-orders')"
+                        class="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-primary-400 dark:hover:border-primary-400 rounded-lg shadow-sm hover:shadow-md transition p-6"
+                    >
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 w-12 h-12 bg-orange-100 dark:bg-orange-900/30 rounded-lg flex items-center justify-center group-hover:bg-orange-200 dark:group-hover:bg-orange-900/50 transition">
+                                <svg class="w-6 h-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-400 transition">
+                                    Unpaid Orders
+                                </h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    Orders with an outstanding balance
+                                </p>
+                            </div>
+                            <svg class="w-5 h-5 text-gray-400 group-hover:text-primary-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </div>
+                    </Link>
+
+                    <!-- Order Payments Report -->
+                    <Link
+                        :href="route('reports.payments')"
+                        class="group bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border hover:border-primary-400 dark:hover:border-primary-400 rounded-lg shadow-sm hover:shadow-md transition p-6"
+                    >
+                        <div class="flex items-start gap-4">
+                            <div class="flex-shrink-0 w-12 h-12 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center group-hover:bg-teal-200 dark:group-hover:bg-teal-900/50 transition">
+                                <svg class="w-6 h-6 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                                </svg>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 group-hover:text-primary-400 transition">
+                                    Order Payments
+                                </h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                                    All payments, for bank reconciliation
                                 </p>
                             </div>
                             <svg class="w-5 h-5 text-gray-400 group-hover:text-primary-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">

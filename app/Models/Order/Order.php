@@ -3,7 +3,7 @@
 namespace App\Models\Order;
 
 use App\Models\Auth\Organization;
-use App\Models\Auth\User;
+use App\Models\User;
 use App\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -14,6 +14,13 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Order extends Model
 {
     use HasFactory, SoftDeletes, LogsActivity;
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = ['balance_due'];
 
     /**
      * The attributes that are mass assignable.
@@ -35,9 +42,14 @@ class Order extends Model
         'approved_at',
         'approval_notes',
         'subtotal',
+        'discount_type',
+        'discount_value',
+        'discount_amount',
         'tax',
         'shipping',
         'total',
+        'amount_paid',
+        'payment_status',
         'currency',
         'order_date',
         'shipped_at',
@@ -55,9 +67,12 @@ class Order extends Model
     {
         return [
             'subtotal' => 'decimal:2',
+            'discount_value' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
             'tax' => 'decimal:2',
             'shipping' => 'decimal:2',
             'total' => 'decimal:2',
+            'amount_paid' => 'decimal:2',
             'order_date' => 'datetime',
             'shipped_at' => 'datetime',
             'delivered_at' => 'datetime',
@@ -96,6 +111,14 @@ class Order extends Model
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
+    }
+
+    /**
+     * Get the payments for the order.
+     */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(OrderPayment::class)->orderBy('paid_at');
     }
 
     /**
@@ -160,6 +183,53 @@ class Order extends Model
     public function isRejected(): bool
     {
         return $this->approval_status === 'rejected';
+    }
+
+    /**
+     * Get the outstanding balance for the order.
+     */
+    public function getBalanceDueAttribute(): float
+    {
+        return round(max(0, (float) $this->total - (float) $this->amount_paid), 2);
+    }
+
+    /**
+     * Check if the order is fully paid.
+     */
+    public function isPaid(): bool
+    {
+        return $this->payment_status === 'paid';
+    }
+
+    /**
+     * Recalculate the accumulated paid amount and payment status
+     * from the (non-deleted) payments. Call after any payment change
+     * or when the order total changes.
+     */
+    public function recalculatePaymentStatus(): void
+    {
+        $paid = round((float) $this->payments()->sum('amount'), 2);
+
+        if ($paid <= 0) {
+            $status = 'pending';
+        } elseif ($paid + 0.01 >= (float) $this->total) {
+            $status = 'paid';
+        } else {
+            $status = 'partial';
+        }
+
+        $this->forceFill([
+            'amount_paid' => $paid,
+            'payment_status' => $status,
+        ])->save();
+    }
+
+    /**
+     * Scope a query to filter by payment status.
+     */
+    public function scopeByPaymentStatus($query, $status)
+    {
+        return $query->where('payment_status', $status);
     }
 
     /**

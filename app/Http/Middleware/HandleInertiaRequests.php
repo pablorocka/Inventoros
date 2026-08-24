@@ -44,6 +44,10 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
                 'permissions' => $user ? $user->getAllPermissions() : [],
             ],
+            'app' => [
+                'name' => config('app.name'),
+                'logoUrl' => config('app.logo_url'),
+            ],
             'pluginMenuItems' => $pluginMenuItems,
         ];
     }

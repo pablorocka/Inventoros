@@ -2,15 +2,20 @@
 
 namespace App\Http\Controllers\Reports;
 
+use App\Exports\PaymentsReportExport;
+use App\Exports\UnpaidOrdersExport;
 use App\Http\Controllers\Controller;
 use App\Models\Inventory\Product;
 use App\Models\Inventory\StockAdjustment;
 use App\Models\Order\Order;
 use App\Models\Order\OrderItem;
+use App\Models\Order\OrderPayment;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
 
 class ReportController extends Controller
 {
@@ -288,5 +293,186 @@ class ReportController extends Controller
                 'total_value' => $categoryStats->sum('total_value'),
             ],
         ]);
+    }
+
+    /**
+     * Build the base query for unpaid orders (not cancelled, not fully paid),
+     * applying the report filters (date range, staff user, customer name).
+     */
+    private function unpaidOrdersQuery(Request $request, int $organizationId)
+    {
+        $query = Order::query()
+            ->with('creator')
+            ->forOrganization($organizationId)
+            ->where('status', '!=', 'cancelled')
+            ->where('payment_status', '!=', 'paid');
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('order_date', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('order_date', '<=', $request->date_to);
+        }
+        if ($request->filled('user_id')) {
+            $query->where('created_by', $request->user_id);
+        }
+        if ($request->filled('customer')) {
+            $query->where('customer_name', 'like', '%' . $request->customer . '%');
+        }
+
+        return $query->orderBy('order_date', 'desc');
+    }
+
+    /**
+     * Unpaid Orders Report — orders not cancelled and not fully paid.
+     */
+    public function unpaidOrders(Request $request): Response
+    {
+        $organizationId = $request->user()->organization_id;
+
+        $orders = $this->unpaidOrdersQuery($request, $organizationId)->get()->map(function ($order) {
+            return [
+                'id' => $order->id,
+                'order_number' => $order->order_number,
+                'order_date' => $order->order_date?->format('Y-m-d'),
+                'customer_name' => $order->customer_name,
+                'created_by_name' => $order->creator?->name,
+                'status' => $order->status,
+                'total' => (float) $order->total,
+                'amount_paid' => (float) $order->amount_paid,
+                'balance_due' => (float) $order->balance_due,
+                'payment_status' => $order->payment_status,
+                'currency' => $order->currency ?? 'USD',
+            ];
+        });
+
+        $summary = [
+            'total_orders' => $orders->count(),
+            'total_value' => round($orders->sum('total'), 2),
+            'total_paid' => round($orders->sum('amount_paid'), 2),
+            'total_balance_due' => round($orders->sum('balance_due'), 2),
+        ];
+
+        return Inertia::render('Reports/UnpaidOrders', [
+            'orders' => $orders,
+            'summary' => $summary,
+            'users' => $this->organizationUsers($organizationId),
+            'filters' => $request->only(['date_from', 'date_to', 'user_id', 'customer']),
+        ]);
+    }
+
+    /**
+     * Export the Unpaid Orders report to Excel (honours current filters).
+     */
+    public function exportUnpaidOrders(Request $request)
+    {
+        $organizationId = $request->user()->organization_id;
+        $filters = $request->only(['date_from', 'date_to', 'user_id', 'customer']);
+
+        return Excel::download(
+            new UnpaidOrdersExport($organizationId, $filters),
+            'unpaid_orders_' . now()->format('Y-m-d_His') . '.xlsx'
+        );
+    }
+
+    /**
+     * Build the base query for the payments/abonos report, applying the report
+     * filters (date range, staff user who registered it, customer, method).
+     */
+    private function paymentsQuery(Request $request, int $organizationId)
+    {
+        $query = OrderPayment::query()
+            ->with(['order', 'creator'])
+            ->forOrganization($organizationId);
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('paid_at', '>=', $request->date_from);
+        }
+        if ($request->filled('date_to')) {
+            $query->whereDate('paid_at', '<=', $request->date_to);
+        }
+        if ($request->filled('user_id')) {
+            $query->where('created_by', $request->user_id);
+        }
+        if ($request->filled('method')) {
+            $query->where('method', $request->method);
+        }
+        if ($request->filled('customer')) {
+            $customer = $request->customer;
+            $query->whereHas('order', function ($q) use ($customer) {
+                $q->where('customer_name', 'like', '%' . $customer . '%');
+            });
+        }
+
+        return $query->orderBy('paid_at', 'desc');
+    }
+
+    /**
+     * Order Payments Report — one row per payment, for bank reconciliation.
+     */
+    public function payments(Request $request): Response
+    {
+        $organizationId = $request->user()->organization_id;
+
+        $payments = $this->paymentsQuery($request, $organizationId)->get()->map(function ($payment) {
+            return [
+                'id' => $payment->id,
+                'paid_at' => $payment->paid_at?->format('Y-m-d H:i'),
+                'order_number' => $payment->order?->order_number,
+                'customer_name' => $payment->order?->customer_name,
+                'amount' => (float) $payment->amount,
+                'method' => $payment->method,
+                'reference' => $payment->reference,
+                'registered_by_name' => $payment->creator?->name,
+                'notes' => $payment->notes,
+            ];
+        });
+
+        $byMethod = $payments->groupBy('method')->map(function ($items, $method) {
+            return [
+                'method' => $method,
+                'count' => $items->count(),
+                'amount' => round($items->sum('amount'), 2),
+            ];
+        })->values();
+
+        $summary = [
+            'total_payments' => $payments->count(),
+            'total_amount' => round($payments->sum('amount'), 2),
+        ];
+
+        return Inertia::render('Reports/Payments', [
+            'payments' => $payments,
+            'summary' => $summary,
+            'byMethod' => $byMethod,
+            'users' => $this->organizationUsers($organizationId),
+            'methods' => ['cash', 'transfer', 'card', 'yappy', 'other'],
+            'filters' => $request->only(['date_from', 'date_to', 'user_id', 'customer', 'method']),
+        ]);
+    }
+
+    /**
+     * Export the Order Payments report to Excel (honours current filters).
+     */
+    public function exportPayments(Request $request)
+    {
+        $organizationId = $request->user()->organization_id;
+        $filters = $request->only(['date_from', 'date_to', 'user_id', 'customer', 'method']);
+
+        return Excel::download(
+            new PaymentsReportExport($organizationId, $filters),
+            'payments_' . now()->format('Y-m-d_His') . '.xlsx'
+        );
+    }
+
+    /**
+     * Staff users of the organization, for the "person" filter dropdowns.
+     */
+    private function organizationUsers(int $organizationId)
+    {
+        return User::where('organization_id', $organizationId)
+            ->select('id', 'name')
+            ->orderBy('name')
+            ->get();
     }
 }

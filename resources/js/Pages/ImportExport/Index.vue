@@ -75,6 +75,10 @@ const submitImport = () => {
     });
 };
 
+const exportOrders = () => {
+    window.location.href = route('import-export.export-orders');
+};
+
 const exportProducts = () => {
     const params = new URLSearchParams();
 
@@ -119,13 +123,13 @@ const hasActiveFilters = computed(() => {
 
     <AuthenticatedLayout>
         <template #header>
-            <h2 class="font-semibold text-2xl text-gray-900 dark:text-gray-100">
+            <h2 class="font-semibold text-xl sm:text-2xl text-gray-900 dark:text-gray-100">
                 Import / Export
             </h2>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Success Message -->
                 <div v-if="flashSuccess" class="mb-6 bg-green-900/20 border border-green-800 rounded-lg p-4">
                     <div class="flex items-start gap-3">
@@ -178,6 +182,11 @@ const hasActiveFilters = computed(() => {
                             </div>
                         </div>
                     </div>
+                </div>
+
+                <div class="mb-3 flex items-center gap-3">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Products</h2>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">inventory catalog</span>
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -412,6 +421,78 @@ const hasActiveFilters = computed(() => {
                             </div>
                         </form>
                     </div>
+                </div>
+
+                <!-- ============ ORDERS ============ -->
+                <div class="mt-8 mb-3 flex items-center gap-3">
+                    <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Orders</h2>
+                    <span class="text-sm text-gray-500 dark:text-gray-400">with items and payments (abonos)</span>
+                </div>
+
+                <div class="grid grid-cols-1 gap-6">
+                    <!-- Export Orders -->
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border shadow-sm sm:rounded-lg p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="p-3 bg-green-900/20 rounded-lg">
+                                <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Export Orders</h3>
+                                <p class="text-sm text-gray-500 dark:text-gray-400">Download orders, items and payments</p>
+                            </div>
+                        </div>
+
+                        <p class="text-gray-600 dark:text-gray-300 mb-6">
+                            Export all your orders to a multi-sheet Excel file. Includes order headers, line items, and payments (abonos) — ready to re-import into another installation.
+                        </p>
+
+                        <button
+                            type="button"
+                            @click="exportOrders"
+                            class="w-full inline-flex items-center justify-center px-4 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg font-semibold transition"
+                        >
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Export Orders to Excel
+                        </button>
+
+                        <div class="pt-4 mt-4 border-t border-gray-200 dark:border-dark-border">
+                            <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Workbook sheets:</h4>
+                            <ul class="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+                                <li class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                    <strong>Orders</strong> — totals, discount, status
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                    <strong>Items</strong> — products, quantities, prices
+                                </li>
+                                <li class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                                    <strong>Payments</strong> — abonos, method, reference
+                                </li>
+                            </ul>
+                        </div>
+
+                            <div class="pt-4 border-t border-gray-200 dark:border-dark-border">
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                                    Download the empty orders template (Orders / Items / Payments sheets):
+                                </p>
+                                <a
+                                    :href="route('import-export.download-orders-template')"
+                                    class="w-full inline-flex items-center justify-center px-4 py-2 bg-gray-100 dark:bg-dark-bg text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-dark-bg/80 border border-gray-200 dark:border-dark-border transition"
+                                >
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                    </svg>
+                                    Download Orders Template
+                                </a>
+                            </div>
+                    </div>
+
                 </div>
 
                 <!-- Import Instructions -->

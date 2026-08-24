@@ -94,12 +94,12 @@ const formatDate = (date) => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="font-semibold text-2xl text-gray-900 dark:text-gray-100">Notifications</h2>
+                    <h2 class="font-semibold text-xl sm:text-2xl text-gray-900 dark:text-gray-100">Notifications</h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Manage your notifications and alerts</p>
                 </div>
-                <div class="flex gap-3">
+                <div class="flex flex-wrap gap-2 sm:gap-3">
                     <button
                         v-if="stats.unread > 0"
                         @click="markAllAsRead"
@@ -118,8 +118,8 @@ const formatDate = (date) => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-lg shadow-sm p-6">
@@ -229,7 +229,7 @@ const formatDate = (date) => {
                                             @click="markAsRead(notification)"
                                             class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
                                         >
-                                            View Details ’
+                                            View Details â€º
                                         </Link>
                                         <button
                                             v-if="!notification.read_at"

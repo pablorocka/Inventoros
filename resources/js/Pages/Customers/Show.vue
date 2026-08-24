@@ -18,11 +18,11 @@ const deleteCustomer = () => {
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold text-xl text-gray-900 dark:text-gray-100 leading-tight">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <h2 class="font-semibold text-lg sm:text-xl text-gray-900 dark:text-gray-100 leading-tight truncate">
                     {{ customer.name }}
                 </h2>
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-2 sm:gap-3">
                     <Link
                         :href="route('customers.edit', customer.id)"
                         class="inline-flex items-center px-4 py-2 bg-primary-400 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-primary-500"
@@ -39,7 +39,7 @@ const deleteCustomer = () => {
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
             <div class="max-w-4xl mx-auto sm:px-6 lg:px-8 space-y-6">
                 <!-- Status Badge -->
                 <div class="flex items-center gap-3">
@@ -59,7 +59,7 @@ const deleteCustomer = () => {
                 </div>
 
                 <!-- Basic Information -->
-                <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Basic Information</h3>
                     </div>
@@ -97,7 +97,7 @@ const deleteCustomer = () => {
                 <!-- Addresses -->
                 <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
                     <!-- Billing Address -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Billing Address</h3>
                         </div>
@@ -116,7 +116,7 @@ const deleteCustomer = () => {
                     </div>
 
                     <!-- Shipping Address -->
-                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                    <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                         <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                             <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Shipping Address</h3>
                         </div>
@@ -136,7 +136,7 @@ const deleteCustomer = () => {
                 </div>
 
                 <!-- Business Details -->
-                <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Business Details</h3>
                     </div>
@@ -169,7 +169,7 @@ const deleteCustomer = () => {
                 </div>
 
                 <!-- Orders -->
-                <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg sm:rounded-lg">
+                <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border overflow-hidden shadow-lg rounded-lg">
                     <div class="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
                         <h3 class="text-lg font-medium text-gray-900 dark:text-gray-100">Recent Orders</h3>
                     </div>

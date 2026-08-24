@@ -39,9 +39,9 @@ const isDecrease = computed(() => props.adjustment.adjustment_quantity < 0);
 
     <AuthenticatedLayout>
         <template #header>
-            <div class="flex justify-between items-center">
+            <div class="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 class="font-semibold text-2xl text-gray-900 dark:text-gray-100">Stock Adjustment Details</h2>
+                    <h2 class="font-semibold text-xl sm:text-2xl text-gray-900 dark:text-gray-100">Stock Adjustment Details</h2>
                     <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Adjustment #{{ adjustment.id }}</p>
                 </div>
                 <Link
@@ -53,8 +53,8 @@ const isDecrease = computed(() => props.adjustment.adjustment_quantity < 0);
             </div>
         </template>
 
-        <div class="py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
-            <div class="max-w-4xl mx-auto sm:px-6 lg:px-8">
+        <div class="py-4 sm:py-12 bg-gray-50 dark:bg-dark-bg min-h-screen">
+            <div class="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8">
                 <!-- Summary Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                     <!-- Before -->

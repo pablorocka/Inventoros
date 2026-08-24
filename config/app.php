@@ -13,7 +13,39 @@ return [
     |
     */
 
-    'name' => env('APP_NAME', 'Laravel'),
+    'name' => env('APP_NAME', 'Inventario'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Logo
+    |--------------------------------------------------------------------------
+    |
+    | Optional URL to a custom logo image (svg/png) shown in the app's
+    | sidebar. Point it at a file served from the "public" storage disk
+    | (e.g. "/storage/branding/logo.svg", uploaded via `storage:link`) or
+    | any absolute URL. Leave unset to use the bundled default icon.
+    |
+    */
+
+    'logo_url' => env('APP_LOGO_URL'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Force HTTPS Scheme
+    |--------------------------------------------------------------------------
+    |
+    | This option forces the application to generate all URLs using the HTTPS
+    | scheme. This is especially useful when the application is running behind
+    | a reverse proxy, load balancer, or tunnel (such as Cloudflare) that
+    | terminates TLS before forwarding requests to the application.
+    |
+    | When disabled, Laravel will automatically determine the scheme based
+    | on the incoming request. This option is disabled by default to preserve
+    | compatibility with traditional HTTP deployments.
+    |
+    */
+
+    'force_https' => env('FORCE_HTTPS', false),
 
     /*
     |--------------------------------------------------------------------------
