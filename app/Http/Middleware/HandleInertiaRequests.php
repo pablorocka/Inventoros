@@ -49,6 +49,10 @@ class HandleInertiaRequests extends Middleware
                 'logoUrl' => config('app.logo_url'),
             ],
             'pluginMenuItems' => $pluginMenuItems,
+            'flash' => [
+                'success' => fn () => $request->session()->get('success'),
+                'error' => fn () => $request->session()->get('error'),
+            ],
         ];
     }
 }

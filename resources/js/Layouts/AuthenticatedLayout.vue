@@ -8,6 +8,7 @@ import ThemeToggle from '@/Components/Layout/ThemeToggle.vue';
 import SidebarNavItem from '@/Components/Layout/SidebarNavItem.vue';
 import SidebarUserProfile from '@/Components/Layout/SidebarUserProfile.vue';
 import MobileBottomNav from '@/Components/Layout/MobileBottomNav.vue';
+import FlashToast from '@/Components/Layout/FlashToast.vue';
 
 const sidebarOpen = ref(false);
 const settingsSubmenuOpen = ref(false);
@@ -128,6 +129,8 @@ const navItems = {
 
 <template>
     <div class="min-h-screen bg-dark-bg">
+        <FlashToast />
+
         <!-- Sidebar for desktop -->
         <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-dark-card border-r border-dark-border transform transition-transform duration-200 lg:translate-x-0"
                :class="{ '-translate-x-full': !sidebarOpen, 'translate-x-0': sidebarOpen }">
