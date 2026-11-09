@@ -2,7 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import PluginSlot from '@/Components/PluginSlot.vue';
 import { Head, Link, router, useForm } from '@inertiajs/vue3';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
 import { usePermissions } from '@/composables/usePermissions';
 
 const { hasPermission } = usePermissions();
@@ -12,6 +12,24 @@ const props = defineProps({
     canApprove: Boolean,
     canManagePayments: Boolean,
     pluginComponents: Object,
+});
+
+// Items sold as part of a set are shown together under the set
+const itemGroups = computed(() => {
+    const groups = [];
+
+    (props.order.items || []).forEach((item) => {
+        const set = item.metadata?.set;
+        const group = set && groups.find((g) => g.lineId === set.line_id);
+
+        if (group) {
+            group.items.push(item);
+        } else {
+            groups.push({ lineId: set?.line_id ?? `item-${item.id}`, set, items: [item] });
+        }
+    });
+
+    return groups;
 });
 
 const showDeleteModal = ref(false);
@@ -233,13 +251,26 @@ const formatDateShort = (date) => {
 
                             <div v-if="order.items && order.items.length > 0" class="space-y-3">
                                 <div
-                                    v-for="(item, index) in order.items"
-                                    :key="index"
+                                    v-for="group in itemGroups"
+                                    :key="group.lineId"
+                                    :class="group.set ? 'p-3 border border-primary-400/40 rounded-lg space-y-3' : 'space-y-3'"
+                                >
+                                    <div v-if="group.set" class="flex items-center justify-between gap-3">
+                                        <div class="min-w-0">
+                                            <p class="text-xs font-semibold uppercase tracking-wide text-primary-500 dark:text-primary-400">Set</p>
+                                            <p class="font-medium text-gray-900 dark:text-gray-100 break-words">{{ group.set.name }}</p>
+                                        </div>
+                                        <p class="shrink-0 font-medium text-gray-900 dark:text-gray-100">× {{ group.set.quantity }}</p>
+                                    </div>
+                                <div
+                                    v-for="item in group.items"
+                                    :key="item.id"
                                     class="flex flex-col gap-3 p-4 bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg sm:flex-row sm:items-center sm:gap-4"
                                 >
                                     <div class="flex-1 min-w-0">
                                         <p class="font-medium text-gray-900 dark:text-gray-100 break-words">{{ item.product_name }}</p>
                                         <p class="text-sm text-gray-500 dark:text-gray-400">SKU: {{ item.sku }}</p>
+                                        <p v-if="item.metadata?.location" class="text-sm text-gray-500 dark:text-gray-400">Location: {{ item.metadata.location }}</p>
                                         <Link
                                             v-if="item.product"
                                             :href="route('products.show', item.product_id)"
@@ -267,6 +298,7 @@ const formatDateShort = (date) => {
                                         </p>
                                     </div>
                                     </div>
+                                </div>
                                 </div>
                             </div>
 

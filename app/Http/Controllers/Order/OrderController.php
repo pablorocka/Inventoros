@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Inventory\Product;
 use App\Models\Order\Order;
 use App\Services\NotificationService;
+use App\Services\ProductSetService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -13,6 +14,10 @@ use Inertia\Response;
 
 class OrderController extends Controller
 {
+    public function __construct(private ProductSetService $productSets)
+    {
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -70,6 +75,7 @@ class OrderController extends Controller
 
         return Inertia::render('Orders/Create', [
             'products' => $products,
+            'sets' => $this->productSets->orderFormSets($organizationId),
         ]);
     }
 
@@ -124,10 +130,19 @@ class OrderController extends Controller
             'discount_type' => 'nullable|in:percent,fixed',
             'discount_value' => 'nullable|numeric|min:0|required_with:discount_type',
             'notes' => 'nullable|string',
-            'items' => 'required|array|min:1',
+            'items' => 'required_without:sets|array',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'sets' => 'nullable|array',
+            'sets.*.line_id' => 'nullable|string',
+            'sets.*.product_set_id' => 'nullable|integer',
+            'sets.*.quantity' => 'required|integer|min:1',
+            'sets.*.selections' => 'nullable|array',
+            'sets.*.selections.*.set_item_id' => 'required|integer',
+            'sets.*.selections.*.product_id' => 'required|integer',
+        ], [
+            'items.required_without' => 'Add at least one product or set to the order.',
         ]);
 
         $validated['organization_id'] = $request->user()->organization_id;
@@ -142,7 +157,7 @@ class OrderController extends Controller
                 $subtotal = 0;
                 $orderItems = [];
 
-                foreach ($validated['items'] as $item) {
+                foreach ($validated['items'] ?? [] as $item) {
                     // Lock the product row for update to prevent concurrent modifications
                     $product = Product::where('id', $item['product_id'])
                         ->lockForUpdate()
@@ -174,6 +189,11 @@ class OrderController extends Controller
                     // Reduce product stock (within transaction with lock)
                     $product->decrement('stock', $item['quantity']);
                 }
+
+                // Sets become regular order items and take stock of the selected instances
+                $setRows = $this->productSets->expandOrderLines($validated['sets'] ?? [], $validated['organization_id']);
+                $subtotal += collect($setRows)->sum('subtotal');
+                $orderItems = array_merge($orderItems, $setRows);
 
                 $validated['subtotal'] = $subtotal;
                 $validated['tax'] = $validated['tax'] ?? 0;
@@ -252,6 +272,7 @@ class OrderController extends Controller
         return Inertia::render('Orders/Edit', [
             'order' => $order,
             'products' => $products,
+            'sets' => $this->productSets->orderFormSets($organizationId),
         ]);
     }
 
@@ -276,111 +297,151 @@ class OrderController extends Controller
             'discount_type' => 'nullable|in:percent,fixed',
             'discount_value' => 'nullable|numeric|min:0|required_with:discount_type',
             'notes' => 'nullable|string',
-            'items' => 'required|array|min:1',
+            'items' => 'required_without:sets|array',
             'items.*.id' => 'nullable|exists:order_items,id',
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity' => 'required|integer|min:1',
             'items.*.unit_price' => 'required|numeric|min:0',
+            'sets' => 'nullable|array',
+            'sets.*.line_id' => 'nullable|string',
+            'sets.*.product_set_id' => 'nullable|integer',
+            'sets.*.quantity' => 'required|integer|min:1',
+            'sets.*.selections' => 'nullable|array',
+            'sets.*.selections.*.set_item_id' => 'required|integer',
+            'sets.*.selections.*.product_id' => 'required|integer',
+        ], [
+            'items.required_without' => 'Add at least one product or set to the order.',
         ]);
 
-        // Load existing items
-        $order->load('items');
-        $existingItems = $order->items->keyBy('id');
+        try {
+            DB::transaction(function () use ($validated, $order) {
+                // Load existing items
+                $order->load('items');
+                $existingItems = $order->items->keyBy('id');
 
-        // Track which items to keep
-        $itemIdsToKeep = [];
+                // Set lines are only touched through $validated['sets'], never as individual items
+                $setItems = $existingItems->filter(fn ($item) => isset($item->metadata['set']));
+                $plainItems = $existingItems->diffKeys($setItems);
+                $linesByRequest = collect($validated['sets'] ?? [])->filter(fn ($line) => !empty($line['line_id']));
+                $newLines = collect($validated['sets'] ?? [])->filter(fn ($line) => empty($line['line_id']));
+                $keptLineIds = $linesByRequest->pluck('line_id');
 
-        // Calculate new totals
-        $subtotal = 0;
-        $updatedItems = [];
+                // Track which items to keep
+                $itemIdsToKeep = collect($validated['items'] ?? [])
+                    ->pluck('id')
+                    ->filter(fn ($id) => $id && $plainItems->has($id))
+                    ->merge($setItems->filter(fn ($item) => $keptLineIds->contains($item->metadata['set']['line_id']))->keys())
+                    ->all();
 
-        foreach ($validated['items'] as $itemData) {
-            $product = Product::find($itemData['product_id']);
-            $itemSubtotal = $itemData['quantity'] * $itemData['unit_price'];
-            $subtotal += $itemSubtotal;
+                // Delete removed items and restore their stock first, so it can be sold again below
+                $itemsToDelete = $existingItems->filter(function ($item) use ($itemIdsToKeep) {
+                    return !in_array($item->id, $itemIdsToKeep);
+                });
 
-            if (!empty($itemData['id']) && $existingItems->has($itemData['id'])) {
-                // Update existing item
-                $existingItem = $existingItems->get($itemData['id']);
-                $quantityDiff = $itemData['quantity'] - $existingItem->quantity;
-
-                // Adjust stock based on quantity change
-                if ($quantityDiff != 0) {
-                    $product->decrement('stock', $quantityDiff);
+                foreach ($itemsToDelete as $item) {
+                    if ($item->product) {
+                        $item->product->increment('stock', $item->quantity);
+                    }
+                    $item->delete();
                 }
 
-                $existingItem->update([
-                    'product_id' => $itemData['product_id'],
-                    'product_name' => $product->name,
-                    'sku' => $product->sku,
-                    'quantity' => $itemData['quantity'],
-                    'unit_price' => $itemData['unit_price'],
-                    'subtotal' => $itemSubtotal,
-                    'total' => $itemSubtotal,
-                ]);
+                // Calculate new totals
+                $subtotal = 0;
+                $updatedItems = [];
 
-                $itemIdsToKeep[] = $itemData['id'];
-            } else {
-                // New item
-                $updatedItems[] = [
-                    'product_id' => $itemData['product_id'],
-                    'product_name' => $product->name,
-                    'sku' => $product->sku,
-                    'quantity' => $itemData['quantity'],
-                    'unit_price' => $itemData['unit_price'],
-                    'subtotal' => $itemSubtotal,
-                    'tax' => 0,
-                    'total' => $itemSubtotal,
-                ];
+                foreach ($validated['items'] ?? [] as $itemData) {
+                    $product = Product::find($itemData['product_id']);
+                    $itemSubtotal = $itemData['quantity'] * $itemData['unit_price'];
+                    $subtotal += $itemSubtotal;
 
-                // Reduce stock for new items
-                $product->decrement('stock', $itemData['quantity']);
-            }
+                    if (!empty($itemData['id']) && $plainItems->has($itemData['id'])) {
+                        // Update existing item
+                        $existingItem = $plainItems->get($itemData['id']);
+                        $quantityDiff = $itemData['quantity'] - $existingItem->quantity;
+
+                        // Adjust stock based on quantity change
+                        if ($quantityDiff != 0) {
+                            $product->decrement('stock', $quantityDiff);
+                        }
+
+                        $existingItem->update([
+                            'product_id' => $itemData['product_id'],
+                            'product_name' => $product->name,
+                            'sku' => $product->sku,
+                            'quantity' => $itemData['quantity'],
+                            'unit_price' => $itemData['unit_price'],
+                            'subtotal' => $itemSubtotal,
+                            'total' => $itemSubtotal,
+                        ]);
+                    } else {
+                        // New item
+                        $updatedItems[] = [
+                            'product_id' => $itemData['product_id'],
+                            'product_name' => $product->name,
+                            'sku' => $product->sku,
+                            'quantity' => $itemData['quantity'],
+                            'unit_price' => $itemData['unit_price'],
+                            'subtotal' => $itemSubtotal,
+                            'tax' => 0,
+                            'total' => $itemSubtotal,
+                        ];
+
+                        // Reduce stock for new items
+                        $product->decrement('stock', $itemData['quantity']);
+                    }
+                }
+
+                // Existing set lines keep their products and prices; only the set quantity can change
+                foreach ($linesByRequest as $line) {
+                    $lineItems = $setItems->filter(fn ($item) => $item->metadata['set']['line_id'] === $line['line_id']);
+                    $this->productSets->resizeOrderLine($lineItems, (int) $line['quantity']);
+                    $subtotal += $lineItems->sum(fn ($item) => (float) $item->subtotal);
+                }
+
+                // New set lines become regular order items
+                $setRows = $this->productSets->expandOrderLines($newLines->values()->all(), $order->organization_id);
+                $subtotal += collect($setRows)->sum('subtotal');
+                $updatedItems = array_merge($updatedItems, $setRows);
+
+                // Create new items
+                if (!empty($updatedItems)) {
+                    $order->items()->createMany($updatedItems);
+                }
+
+                // Update order totals and metadata
+                $validated['subtotal'] = $subtotal;
+                $validated['tax'] = $validated['tax'] ?? 0;
+                $validated['shipping'] = $validated['shipping'] ?? 0;
+                $validated['discount_value'] = $validated['discount_value'] ?? 0;
+                $validated['discount_amount'] = $this->computeDiscountAmount($validated, $subtotal);
+                $validated['total'] = round($subtotal - $validated['discount_amount'] + $validated['tax'] + $validated['shipping'], 2);
+
+                // The new total cannot be lower than what has already been paid
+                if ((float) $order->amount_paid > $validated['total'] + 0.01) {
+                    throw \Illuminate\Validation\ValidationException::withMessages([
+                        'total' => 'The new order total ($' . number_format($validated['total'], 2) . ') cannot be lower than the amount already paid ($' . number_format((float) $order->amount_paid, 2) . '). Remove payments first.',
+                    ]);
+                }
+
+                // Update order timestamps based on status
+                if ($validated['status'] === 'shipped' && !$order->shipped_at) {
+                    $validated['shipped_at'] = now();
+                } elseif ($validated['status'] === 'delivered' && !$order->delivered_at) {
+                    $validated['delivered_at'] = now();
+                }
+
+                $order->update($validated);
+
+                // Total may have changed: refresh accumulated payment status
+                $order->recalculatePaymentStatus();
+            });
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', $e->getMessage());
         }
-
-        // Delete removed items and restore their stock
-        $itemsToDelete = $existingItems->filter(function ($item) use ($itemIdsToKeep) {
-            return !in_array($item->id, $itemIdsToKeep);
-        });
-
-        foreach ($itemsToDelete as $item) {
-            if ($item->product) {
-                $item->product->increment('stock', $item->quantity);
-            }
-            $item->delete();
-        }
-
-        // Create new items
-        if (!empty($updatedItems)) {
-            $order->items()->createMany($updatedItems);
-        }
-
-        // Update order totals and metadata
-        $validated['subtotal'] = $subtotal;
-        $validated['tax'] = $validated['tax'] ?? 0;
-        $validated['shipping'] = $validated['shipping'] ?? 0;
-        $validated['discount_value'] = $validated['discount_value'] ?? 0;
-        $validated['discount_amount'] = $this->computeDiscountAmount($validated, $subtotal);
-        $validated['total'] = round($subtotal - $validated['discount_amount'] + $validated['tax'] + $validated['shipping'], 2);
-
-        // The new total cannot be lower than what has already been paid
-        if ((float) $order->amount_paid > $validated['total'] + 0.01) {
-            throw \Illuminate\Validation\ValidationException::withMessages([
-                'total' => 'The new order total ($' . number_format($validated['total'], 2) . ') cannot be lower than the amount already paid ($' . number_format((float) $order->amount_paid, 2) . '). Remove payments first.',
-            ]);
-        }
-
-        // Update order timestamps based on status
-        if ($validated['status'] === 'shipped' && !$order->shipped_at) {
-            $validated['shipped_at'] = now();
-        } elseif ($validated['status'] === 'delivered' && !$order->delivered_at) {
-            $validated['delivered_at'] = now();
-        }
-
-        $order->update($validated);
-
-        // Total may have changed: refresh accumulated payment status
-        $order->recalculatePaymentStatus();
 
         return redirect()->route('orders.index')
             ->with('success', 'Order updated successfully.');

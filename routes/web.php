@@ -11,6 +11,7 @@ use App\Http\Controllers\Install\InstallerController;
 use App\Http\Controllers\Inventory\ProductController;
 use App\Http\Controllers\Inventory\ProductCategoryController;
 use App\Http\Controllers\Inventory\ProductLocationController;
+use App\Http\Controllers\Inventory\ProductSetController;
 use App\Http\Controllers\Inventory\StockAdjustmentController;
 use App\Http\Controllers\Inventory\SupplierController;
 use App\Http\Controllers\Order\OrderController;
@@ -114,6 +115,15 @@ Route::middleware('auth')->group(function () {
     Route::put('/customers/{customer}', [CustomerController::class, 'update'])->name('customers.update')->middleware('permission:edit_customers');
     Route::patch('/customers/{customer}', [CustomerController::class, 'update'])->middleware('permission:edit_customers');
     Route::delete('/customers/{customer}', [CustomerController::class, 'destroy'])->name('customers.destroy')->middleware('permission:delete_customers');
+
+    // Product Sets - Permission based
+    Route::get('/sets', [ProductSetController::class, 'index'])->name('sets.index')->middleware('permission:view_sets');
+    Route::get('/sets/create', [ProductSetController::class, 'create'])->name('sets.create')->middleware('permission:create_sets');
+    Route::post('/sets', [ProductSetController::class, 'store'])->name('sets.store')->middleware('permission:create_sets');
+    Route::get('/sets/{set}', [ProductSetController::class, 'show'])->name('sets.show')->middleware('permission:view_sets');
+    Route::get('/sets/{set}/edit', [ProductSetController::class, 'edit'])->name('sets.edit')->middleware('permission:edit_sets');
+    Route::put('/sets/{set}', [ProductSetController::class, 'update'])->name('sets.update')->middleware('permission:edit_sets');
+    Route::delete('/sets/{set}', [ProductSetController::class, 'destroy'])->name('sets.destroy')->middleware('permission:delete_sets');
 
     // Purchase Order Management - Permission based
     Route::get('/purchase-orders', [PurchaseOrderController::class, 'index'])->name('purchase-orders.index')->middleware('permission:view_purchase_orders');

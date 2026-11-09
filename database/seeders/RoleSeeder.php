@@ -41,6 +41,10 @@ class RoleSeeder extends Seeder
                     Permission::CREATE_PRODUCTS->value,
                     Permission::EDIT_PRODUCTS->value,
                     Permission::DELETE_PRODUCTS->value,
+                    Permission::VIEW_SETS->value,
+                    Permission::CREATE_SETS->value,
+                    Permission::EDIT_SETS->value,
+                    Permission::DELETE_SETS->value,
                     Permission::MANAGE_CATEGORIES->value,
                     Permission::MANAGE_LOCATIONS->value,
 
@@ -70,6 +74,7 @@ class RoleSeeder extends Seeder
                 'is_system' => true,
                 'permissions' => [
                     Permission::VIEW_PRODUCTS->value,
+                    Permission::VIEW_SETS->value,
                     Permission::VIEW_ORDERS->value,
                 ],
             ]

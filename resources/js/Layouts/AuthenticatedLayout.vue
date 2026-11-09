@@ -69,6 +69,11 @@ const navItems = {
         icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4',
         activeRoutes: ['products.*'],
     },
+    sets: {
+        icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z',
+        activeRoutes: ['sets.*'],
+        color: 'purple',
+    },
     orders: {
         icon: 'M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z',
         activeRoutes: ['orders.*'],
@@ -173,6 +178,16 @@ const navItems = {
                         :icon="navItems.products.icon"
                         label="Inventory"
                         :active-routes="navItems.products.activeRoutes"
+                    />
+
+                    <!-- Sets -->
+                    <SidebarNavItem
+                        v-if="hasPermission('view_sets')"
+                        :href="route('sets.index')"
+                        :icon="navItems.sets.icon"
+                        label="Sets"
+                        :active-routes="navItems.sets.activeRoutes"
+                        :active-color="navItems.sets.color"
                     />
 
                     <!-- Plugin Menu Items -->

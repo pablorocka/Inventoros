@@ -1,11 +1,17 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import OrderItemTabs from '@/Components/Orders/OrderItemTabs.vue';
+import SetLines from '@/Components/Orders/SetLines.vue';
+import SetPicker from '@/Components/Orders/SetPicker.vue';
+import { useOrderSets } from '@/composables/useOrderSets';
+import { linesFromOrderItems } from '@/utils/orderSets';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed } from 'vue';
 
 const props = defineProps({
     order: Object,
     products: Array,
+    sets: { type: Array, default: () => [] },
 });
 
 const form = useForm({
@@ -19,16 +25,30 @@ const form = useForm({
     discount_type: props.order.discount_type || null,
     discount_value: parseFloat(props.order.discount_value || 0),
     notes: props.order.notes || '',
-    items: props.order.items.map(item => ({
+    items: props.order.items.filter(item => !item.metadata?.set).map(item => ({
         id: item.id,
         product_id: item.product_id,
         quantity: item.quantity,
         unit_price: parseFloat(item.unit_price),
     })),
+    sets: linesFromOrderItems(props.order.items),
 });
 
+// Stock already held by this order can be reused while editing it
+const heldStock = props.order.items.reduce((held, item) => {
+    if (item.product_id) held[item.product_id] = (held[item.product_id] ?? 0) + item.quantity;
+    return held;
+}, {});
+
+const orderSets = useOrderSets(form, props, heldStock);
+
 const submit = () => {
-    form.put(route('orders.update', props.order.id), {
+    if (orderSets.incompleteLines.value) {
+        alert('Please select a location for every set in the order.');
+        return;
+    }
+
+    form.transform(orderSets.withSerializedSets).put(route('orders.update', props.order.id), {
         preserveScroll: true,
     });
 };
@@ -47,7 +67,7 @@ const getStatusClass = (status) => {
 const subtotal = computed(() => {
     return form.items.reduce((sum, item) => {
         return sum + (parseFloat(item.quantity || 0) * parseFloat(item.unit_price || 0));
-    }, 0);
+    }, orderSets.setsSubtotal.value);
 });
 
 const discountAmount = computed(() => {
@@ -181,24 +201,44 @@ const getProductStock = (productId) => {
 
                             <!-- Order Items (Editable) -->
                             <div class="bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border shadow-sm sm:rounded-lg p-6">
-                                <div class="flex items-center justify-between mb-4">
-                                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
-                                        Order Items
-                                    </h3>
-                                    <button
-                                        type="button"
-                                        @click="addItem"
-                                        class="px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition"
-                                    >
-                                        Add Item
-                                    </button>
-                                </div>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                                    Order Items
+                                </h3>
+
+                                <OrderItemTabs>
+                                    <template #products>
+                                        <button
+                                            type="button"
+                                            @click="addItem"
+                                            class="w-full sm:w-auto min-h-[44px] px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white text-sm font-medium rounded-lg transition"
+                                        >
+                                            Add Item
+                                        </button>
+                                    </template>
+                                    <template #sets>
+                                        <SetPicker
+                                            :sets="sets"
+                                            :available="orderSets.available"
+                                            :capacity="orderSets.capacity"
+                                            @add="orderSets.addSet"
+                                        />
+                                    </template>
+                                </OrderItemTabs>
+
+                                <SetLines
+                                    class="mb-4"
+                                    :lines="form.sets"
+                                    :state="orderSets.lineState"
+                                    :errors="form.errors"
+                                    @remove="orderSets.removeLine"
+                                    @update-quantity="orderSets.setLineQuantity"
+                                />
 
                                 <div v-if="form.errors.items" class="mb-4 p-4 bg-red-900/20 border border-red-800/30 rounded-lg">
                                     <p class="text-sm text-red-300">{{ form.errors.items }}</p>
                                 </div>
 
-                                <div v-if="form.items.length === 0" class="text-center py-12">
+                                <div v-if="form.items.length === 0 && form.sets.length === 0" class="text-center py-12">
                                     <svg class="w-16 h-16 text-gray-400 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                     </svg>
@@ -212,7 +252,7 @@ const getProductStock = (productId) => {
                                     </button>
                                 </div>
 
-                                <div v-else class="space-y-4">
+                                <div v-else-if="form.items.length" class="space-y-4">
                                     <div
                                         v-for="(item, index) in form.items"
                                         :key="index"

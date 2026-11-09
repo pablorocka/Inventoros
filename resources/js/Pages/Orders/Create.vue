@@ -1,11 +1,16 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
+import OrderItemTabs from '@/Components/Orders/OrderItemTabs.vue';
+import SetLines from '@/Components/Orders/SetLines.vue';
+import SetPicker from '@/Components/Orders/SetPicker.vue';
+import { useOrderSets } from '@/composables/useOrderSets';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { ref, computed, watch } from 'vue';
 import { onMounted, onBeforeUnmount } from 'vue';
 
 const props = defineProps({
     products: Array,
+    sets: { type: Array, default: () => [] },
 });
 
 const form = useForm({
@@ -20,7 +25,10 @@ const form = useForm({
     discount_value: 0,
     notes: '',
     items: [],
+    sets: [],
 });
+
+const orderSets = useOrderSets(form, props);
 
 watch(() => form.errors, (errors) => {
     console.log('Validation errors:', errors);
@@ -118,7 +126,7 @@ const updateItemPrice = (index, newPrice) => {
 const subtotal = computed(() => {
     return form.items.reduce((sum, item) => {
         return sum + (item.quantity * item.unit_price);
-    }, 0);
+    }, orderSets.setsSubtotal.value);
 });
 
 const discountAmount = computed(() => {
@@ -135,12 +143,17 @@ const total = computed(() => {
 });
 
 const submit = () => {
-    if (form.items.length === 0) {
-        alert('Please add at least one product to the order.');
+    if (form.items.length === 0 && form.sets.length === 0) {
+        alert('Please add at least one product or set to the order.');
         return;
     }
 
-    form.post(route('orders.store'), {
+    if (orderSets.incompleteLines.value) {
+        alert('Please select a location for every set in the order.');
+        return;
+    }
+
+    form.transform(orderSets.withSerializedSets).post(route('orders.store'), {
         preserveScroll: true,
     });
 };
@@ -240,66 +253,87 @@ const availableProducts = computed(() => {
                                     Order Items
                                 </h3>
 
-                                <!-- Add Item Form -->
-                                <div class="mb-6 p-4 bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg">
-                                    <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
-                                        <div class="md:col-span-7">
-                                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                                                Select Product
-                                            </label>
-                                            <div class="relative">
-                                                <input
-                                                        type="text"
-                                                        v-model="searchQuery"
-                                                        @focus="showDropdown = true"
-                                                        placeholder="Search product by name or SKU..."
-                                                        class="block w-full rounded-md bg-white dark:bg-dark-card border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400"
-                                                        />
+                                <OrderItemTabs>
+                                    <template #products>
+                                        <!-- Add Item Form -->
+                                        <div class="p-4 bg-gray-50 dark:bg-dark-bg border border-gray-200 dark:border-dark-border rounded-lg">
+                                            <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+                                                <div class="md:col-span-7">
+                                                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                                                        Select Product
+                                                    </label>
+                                                    <div class="relative">
+                                                        <input
+                                                                type="text"
+                                                                v-model="searchQuery"
+                                                                @focus="showDropdown = true"
+                                                                placeholder="Search product by name or SKU..."
+                                                                class="block w-full rounded-md bg-white dark:bg-dark-card border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400"
+                                                                />
 
-                                                <div
-                                                        v-if="showDropdown && filteredProducts.length"
-                                                        class="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-md shadow-lg"
-                                                        >
                                                         <div
-                                                                v-for="product in filteredProducts"
-                                                                :key="product.id"
-                                                                @click="selectProduct(product)"
-                                                                class="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-bg transition"
+                                                                v-if="showDropdown && filteredProducts.length"
+                                                                class="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto bg-white dark:bg-dark-card border border-gray-200 dark:border-dark-border rounded-md shadow-lg"
                                                                 >
-                                                                <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                                                                    {{ product.name }}
+                                                                <div
+                                                                        v-for="product in filteredProducts"
+                                                                        :key="product.id"
+                                                                        @click="selectProduct(product)"
+                                                                        class="px-3 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-dark-bg transition"
+                                                                        >
+                                                                        <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                                                                            {{ product.name }}
+                                                                        </div>
+                                                                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                                        SKU: {{ product.sku }} | Stock: {{ product.stock }} | ${{ product.price }}
+                                                                    </div>
                                                                 </div>
-                                                            <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                                SKU: {{ product.sku }} | Stock: {{ product.stock }} | ${{ product.price }}
-                                                            </div>
                                                         </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="md:col-span-3">
+                                                    <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
+                                                        Quantity
+                                                    </label>
+                                                    <input
+                                                        v-model.number="quantity"
+                                                        type="number"
+                                                        min="1"
+                                                        class="block w-full rounded-md bg-white dark:bg-dark-card border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400"
+                                                    />
+                                                </div>
+
+                                                <div class="md:col-span-2 flex items-end">
+                                                    <button
+                                                        type="button"
+                                                        @click="addItem"
+                                                        class="w-full px-4 py-2 bg-primary-400 text-white rounded-md hover:bg-primary-500 transition"
+                                                    >
+                                                        Add
+                                                    </button>
                                                 </div>
                                             </div>
                                         </div>
+                                    </template>
+                                    <template #sets>
+                                        <SetPicker
+                                            :sets="sets"
+                                            :available="orderSets.available"
+                                            :capacity="orderSets.capacity"
+                                            @add="orderSets.addSet"
+                                        />
+                                    </template>
+                                </OrderItemTabs>
 
-                                        <div class="md:col-span-3">
-                                            <label class="block text-sm font-medium text-gray-600 dark:text-gray-300 mb-1">
-                                                Quantity
-                                            </label>
-                                            <input
-                                                v-model.number="quantity"
-                                                type="number"
-                                                min="1"
-                                                class="block w-full rounded-md bg-white dark:bg-dark-card border-gray-200 dark:border-dark-border text-gray-900 dark:text-gray-100 shadow-sm focus:border-primary-400 focus:ring-primary-400"
-                                            />
-                                        </div>
-
-                                        <div class="md:col-span-2 flex items-end">
-                                            <button
-                                                type="button"
-                                                @click="addItem"
-                                                class="w-full px-4 py-2 bg-primary-400 text-white rounded-md hover:bg-primary-500 transition"
-                                            >
-                                                Add
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+                                <SetLines
+                                    class="mb-3"
+                                    :lines="form.sets"
+                                    :state="orderSets.lineState"
+                                    :errors="form.errors"
+                                    @remove="orderSets.removeLine"
+                                    @update-quantity="orderSets.setLineQuantity"
+                                />
 
                                 <!-- Items List -->
                                 <div v-if="form.items.length > 0" class="space-y-3">
@@ -379,11 +413,11 @@ const availableProducts = computed(() => {
                                     </div>
                                 </div>
 
-                                <div v-else class="text-center py-8 text-gray-500 dark:text-gray-400">
+                                <div v-else-if="form.sets.length === 0" class="text-center py-8 text-gray-500 dark:text-gray-400">
                                     <svg class="w-12 h-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                                     </svg>
-                                    <p>No items added yet. Select a product above to add it to the order.</p>
+                                    <p>No items added yet. Select a product or set above to add it to the order.</p>
                                 </div>
 
                                 <p v-if="form.errors.items" class="mt-2 text-sm text-red-400">
@@ -554,7 +588,7 @@ const availableProducts = computed(() => {
                                         type="submit"
                                         class="w-full px-4 py-3 bg-primary-400 text-white rounded-lg font-semibold hover:bg-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2 focus:ring-offset-dark-bg transition"
                                         :class="{ 'opacity-25': form.processing }"
-                                        :disabled="form.processing || form.items.length === 0"
+                                        :disabled="form.processing || (form.items.length === 0 && form.sets.length === 0)"
                                     >
                                         <span v-if="form.processing">Creating Order...</span>
                                         <span v-else>Create Order</span>
